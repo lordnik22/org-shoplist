@@ -1,0 +1,12 @@
+language: generic
+sudo: false
+before_install:
+  - curl -fsSkL https://gist.github.com/rejeep/ebcd57c3af83b049833b/raw > x.sh && source ./x.sh
+  - cask
+env:
+  - EVM_EMACS=emacs-25.1-travis
+script:
+  - make test
+after_failure:
+  - cat test/servant/tmp/servant.log
+after_script:
