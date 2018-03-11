@@ -16,6 +16,24 @@
     "Checks if it's a good day to program."
   (should (= 1 1)))
 
+(ert-deftest org-shoplist-test/create-ing-normal ()
+  (should (equal '(100 "g" "Nuts") (org-shoplist-create-ing 100 "g" "Nuts"))))
+
+(ert-deftest org-shoplist-test/create-ing-when-amount-nil ()
+  (should-error (org-shoplist-create-ing nil "g" "Nuts") :type (list 'error "Amount must be a number")))
+
+(ert-deftest org-shoplist-test/create-ing-when-amount-not-number ()
+  (should-error (org-shoplist-create-ing "100" "g" "Nuts") :type (list 'error "Amount must be a number")))
+
+(ert-deftest org-shoplist-test/create-ing-when-name-nil ()
+  (should-error (org-shoplist-create-ing 100 "g" nil) :type (list 'error "Name must be a string")))
+
+(ert-deftest org-shoplist-test/create-ing-when-invalid-unit ()
+  (should-error (org-shoplist-create-ing 100 "foo" "Nuts") :type (list 'error "Unit must be a element of org-shoplist-ingredient-units")))
+
+(ert-deftest org-shoplist-test/create-ing-when-unit-nil ()
+  (should (equal (list 100 nil "Nuts") (org-shoplist-create-ing 100 nil "Nuts"))))
+
 (ert-deftest org-shoplist-test/str-to-ing-empty-str ()
   (should (equal nil (org-shoplist-str-to-ing ""))))
 
@@ -60,5 +78,4 @@
 (ert-deftest org-shoplist-test/str-to-ing-nested-parenthese-two-ing ()
   (should (equal '((100 "ml" "Milk")
 		   (100 "g" "Nuts")) (org-shoplist-str-to-ing "((100ml Milk)(100g Nuts))"))))
-
 ;;; org-shoplist-test.el ends here
