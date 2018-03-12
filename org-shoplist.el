@@ -60,21 +60,22 @@ Exmaple: '(100 'g' 'crushed Nuts) => 'crushed Nuts'"
   (car (cdr (cdr ing))))
 
 (defun org-shoplist-add-ings (ing1 ing2)
-  "Return a new list where 'ING1' and 'ING2' are added together.
+  "Add amount of 'ING1' and 'ING2' together.
+Returns a new ingredient.
+If one ingredient is nil return other.
 If ingredients can't be added return nil.
-The units must be compatible.
-The names must be the same (case-sensitive)."
+Units must be compatible (see org-shoplist-ingredient-units) else return nil.
+Names must be the same (case-sensitive) else return nil.
+They have to be valid ingredients (see org-shoplist-ing-create) else throw error."
   (if (and (eq nil ing1) (eq nil ing2))
       nil
     (cond ((eq nil ing1) ing2)
 	  ((eq nil ing2) ing1)
-	  (t
-	   (let* ((ing1 (apply 'org-shoplist-ing-create ing1))
-		  (ing2 (apply 'org-shoplist-ing-create ing2)))
-	     (org-shoplist-ing-create (+ (org-shoplist--number-or-zero (org-shoplist-ing-amount ing1))
+	  ((not (string= (org-shoplist-ing-name ing1) (org-shoplist-ing-name ing2))) nil)
+	  (t (org-shoplist-ing-create (+ (org-shoplist--number-or-zero (org-shoplist-ing-amount ing1))
 			     (org-shoplist--number-or-zero (org-shoplist-ing-amount ing2)))
 			  (org-shoplist-ing-unit ing1)
-			  (org-shoplist-ing-name ing1)))))))
+			  (org-shoplist-ing-name ing1))))))
 
 (defun org-shoplist--number-or-zero (number)
   "Return 'NUMBER'.

@@ -69,6 +69,12 @@
 (ert-deftest org-shoplist-test/add-two-equal-ings ()
   (should (equal '(200 "g" "Nuts") (org-shoplist-add-ings org-shoplist-default-ingredient org-shoplist-default-ingredient))))
 
+(ert-deftest org-shoplist-test/not-add-two-diff-ing-names ()
+  (should (equal nil (org-shoplist-add-ings (org-shoplist-ing-create 100 "ml" "Milk") org-shoplist-default-ingredient))))
+
+(ert-deftest org-shoplist-test/not-add-two-diff-ing-units ()
+  (should (equal nil (org-shoplist-add-ings (org-shoplist-ing-create 100 "ml" "Nuts") org-shoplist-default-ingredient))))
+
 (ert-deftest org-shoplist-test/str-to-ing-empty-str ()
   (should (equal nil (org-shoplist-str-to-ing ""))))
 
