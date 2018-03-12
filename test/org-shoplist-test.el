@@ -12,6 +12,9 @@
 	  "\\)?"
 	  " \\(.+?\\))")) 
 
+(defvar org-shoplist-default-ingredient (org-shoplist-ing-create 100 "g" "Nuts")
+  "Default ingredient that is used for many tests.")
+
 (ert-deftest org-shoplist-test/feeling-better? ()
     "Checks if it's a good day to program."
   (should (= 1 1)))
@@ -21,30 +24,50 @@
   (should (equal '(100 "g" "Nuts") (org-shoplist-ing-create 100 "g" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-nil ()
-  (should-error (org-shoplist-ing-create nil "g" "Nuts") :type (list 'error "Amount must be a number")))
+  (should (eq nil (org-shoplist-ing-create nil "g" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-not-number ()
-  (should-error (org-shoplist-ing-create "100" "g" "Nuts") :type (list 'error "Amount must be a number")))
+  (should (eq nil (org-shoplist-ing-create "100" "g" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-name-nil ()
-  (should-error (org-shoplist-ing-create 100 "g" nil) :type (list 'error "Name must be a string")))
+  (should (eq nil (org-shoplist-ing-create 100 "g" nil))))
 
 (ert-deftest org-shoplist-test/ing-create-when-invalid-unit ()
-  (should-error (org-shoplist-ing-create 100 "foo" "Nuts") :type (list 'error "Unit must be a element of org-shoplist-ingredient-units")))
+  (should (eq nil (org-shoplist-ing-create 100 "foo" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-unit-nil ()
   (should (equal (list 100 nil "Nuts") (org-shoplist-ing-create 100 nil "Nuts"))))
 
+(ert-deftest org-shoplist-test/ing-create-when-passing-ing ()
+  (should (equal (list 100 nil "Nuts") (apply 'org-shoplist-ing-create (list 100 nil "Nuts")))))
+
+(ert-deftest org-shoplist-test/ing-amount-when-nil ()
+  (should (eq nil (org-shoplist-ing-amount nil))))
 
 (ert-deftest org-shoplist-test/ing-amount ()
-  (should (= 100 (org-shoplist-ing-amount (org-shoplist-ing-create 100 "g" "Nuts")))))
+  (should (= 100 (org-shoplist-ing-amount org-shoplist-default-ingredient))))
+
+(ert-deftest org-shoplist-test/ing-unit-when-nil ()
+  (should (eq nil (org-shoplist-ing-unit nil))))
 
 (ert-deftest org-shoplist-test/ing-unit ()
-  (should (string= "g" (org-shoplist-ing-unit (org-shoplist-ing-create 100 "g" "Nuts")))))
+  (should (string= "g" (org-shoplist-ing-unit org-shoplist-default-ingredient))))
+
+(ert-deftest org-shoplist-test/ing-name-when-nil ()
+  (should (eq nil (org-shoplist-ing-name nil))))
 
 (ert-deftest org-shoplist-test/ing-name ()
-  (should (string= "Nuts" (org-shoplist-ing-name (org-shoplist-ing-create 100 "g" "Nuts")))))
+  (should (string= "Nuts" (org-shoplist-ing-name org-shoplist-default-ingredient))))
 
+
+(ert-deftest org-shoplist-test/add-two-nil-ingredients ()
+  (should (eq nil (org-shoplist-add-ings nil nil))))
+
+(ert-deftest org-shoplist-test/add-ing-nil-and-ing ()
+  (should (equal '(100 "g" "Nuts") (org-shoplist-add-ings nil org-shoplist-default-ingredient))))
+
+(ert-deftest org-shoplist-test/add-two-equal-ings ()
+  (should (equal '(200 "g" "Nuts") (org-shoplist-add-ings org-shoplist-default-ingredient org-shoplist-default-ingredient))))
 
 (ert-deftest org-shoplist-test/str-to-ing-empty-str ()
   (should (equal nil (org-shoplist-str-to-ing ""))))

@@ -34,13 +34,13 @@
   "Create a ingredient.
 'AMOUNT' must be a number.
 'UNIT' can be nil or a element in org-shoplist-ingredient-units
-'NAME' must be a string."
-  (when (not (numberp amount)) (error "Amount must be a number"))
-  (when (and (not (eq nil unit)) (not (member unit org-shoplist-ingredient-units)))
-    (error "Unit must be a element of org-shoplist-ingredient-units"))
-  (when (not (stringp name)) (error "Name must be a string"))
-
-  (list amount unit name))
+'NAME' must be a string.
+If one constraint gets disregarded return nil."
+  (if (or (not (numberp amount))
+	  (and (not (eq nil unit)) (not (member unit org-shoplist-ingredient-units)))
+	  (not (stringp name)))
+      nil
+    (list amount unit name)))
 
 (defun org-shoplist-ing-amount (ing)
   "Get amount of ingredient as a number.
@@ -58,6 +58,30 @@
 Beaware that the name also includes adjectives.
 Exmaple: '(100 'g' 'crushed Nuts) => 'crushed Nuts'"
   (car (cdr (cdr ing))))
+
+(defun org-shoplist-add-ings (ing1 ing2)
+  "Return a new list where 'ING1' and 'ING2' are added together.
+If ingredients can't be added return nil.
+The units must be compatible.
+The names must be the same (case-sensitive)."
+  (if (and (eq nil ing1) (eq nil ing2))
+      nil
+    (cond ((eq nil ing1) ing2)
+	  ((eq nil ing2) ing1)
+	  (t
+	   (let* ((ing1 (apply 'org-shoplist-ing-create ing1))
+		  (ing2 (apply 'org-shoplist-ing-create ing2)))
+	     (org-shoplist-ing-create (+ (org-shoplist--number-or-zero (org-shoplist-ing-amount ing1))
+			     (org-shoplist--number-or-zero (org-shoplist-ing-amount ing2)))
+			  (org-shoplist-ing-unit ing1)
+			  (org-shoplist-ing-name ing1)))))))
+
+(defun org-shoplist--number-or-zero (number)
+  "Return 'NUMBER'.
+When number is nil return 0."
+  (if (eq nil number)
+      0
+    number))
 
 (defun org-shoplist-str-to-ing (str)
   "Convert 'STR' to a ing struct.
