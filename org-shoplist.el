@@ -30,7 +30,7 @@
 	  " \\(.+?\\))")
   "Regex for finding ingredients in strings.")
 
-(defun org-shoplist-create-ing (amount unit name)
+(defun org-shoplist-ing-create (amount unit name)
   "Create a ingredient.
 'AMOUNT' must be a number.
 'UNIT' can be nil or a element in org-shoplist-ingredient-units
@@ -42,17 +42,17 @@
 
   (list amount unit name))
 
-(defun org-shoplist-ing-get-amount (ing)
+(defun org-shoplist-ing-amount (ing)
   "Get amount of ingredient as a number.
 'ING' is a list representing a ingredient."
   (car ing))
 
-(defun org-shoplist-ing-get-unit (ing)
+(defun org-shoplist-ing-unit (ing)
   "Get unit of ingredient as a string.
 'ING' is a list representing a ingredient."
   (car (cdr ing)))
 
-(defun org-shoplist-ing-get-name (ing)
+(defun org-shoplist-ing-name (ing)
   "Get name of ingredient as a string.
 'ING' is a list representing a ingredient.
 Beaware that the name also includes adjectives.
@@ -74,7 +74,7 @@ Empty ings are nil or nothing."
 'STR' defines the string which contains the ingredients.
 A ingredient is a list of three elements."
   (setq ing-list
-	(cons (org-shoplist-create-ing (string-to-number (match-string 1 str))
+	(cons (org-shoplist-ing-create (string-to-number (match-string 1 str))
 		    (if (string= (match-string 2 str) "")
 			nil
 		      (match-string 2 str))
