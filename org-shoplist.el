@@ -35,6 +35,7 @@ If one constraint gets disregarded throw error."
 'NAME' must be a string.
 'INGS' must be vallid ingredients.
 Use ´(org-shoplist-ing-create)' to create valid ingredients."
-  )
+  (when (eq name nil) (error "Invalid name for recipe"))
+  (cons name ings))
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
