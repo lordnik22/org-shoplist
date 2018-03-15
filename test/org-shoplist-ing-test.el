@@ -2,9 +2,6 @@
 ;;; Commentary:
 ;; Tests the data structures and functions of org-shoplist
 ;;; Code:
-(defvar org-shoplist-default-ingredient (org-shoplist-ing-create "100g" "Nuts")
-  "Default ingredient that is used for many tests.")
-
 (ert-deftest org-shoplist-test/feeling-better? ()
     "Checks if it's a good day to program."
   (should (= 1 1)))
@@ -14,7 +11,7 @@
   (should-error (org-shoplist-ing-create nil nil) :type '(error "Invalid name for ingredient")))
 
 (ert-deftest org-shoplist-test/ing-create-normal ()
-  (should (equal '("Nuts" '(* 100 (var g var-g))) (org-shoplist-ing-create "100g" "Nuts"))))
+  (should (equal '("Nuts" (* 100 (var g var-g))) (org-shoplist-ing-create "100g" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-nil ()
   (should (equal '("Nuts" 0) (org-shoplist-ing-create nil "Nuts"))))
@@ -29,7 +26,7 @@
   (should-error (org-shoplist-ing-create "100g" nil)))
 
 (ert-deftest org-shoplist-test/ing-create-when-custom-unit ()
-  (should (equal '("Nuts" '(* 100 (var foo var-foo))) (org-shoplist-ing-create "100foo" "Nuts"))))
+  (should (equal '("Nuts" (* 100 (var foo var-foo))) (org-shoplist-ing-create "100foo" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-unit-nil ()
   (should (equal '("Nuts" 100) (org-shoplist-ing-create 100 "Nuts"))))
