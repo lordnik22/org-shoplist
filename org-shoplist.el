@@ -57,5 +57,21 @@ Use `org-shoplist-ing-create' to create valid ingredients."
   (when (eq name nil) (error "Invalid name for recipe"))
   (cons name ings))
 
+(defun org-shoplist-recipe-name (recipe)
+  "Get name of `RECIPE'."
+  (car recipe))
+
+(defun org-shoplist-recipe-first-ing (recipe)
+  "Get first ingredient of `RECIPE'."
+  (car (cdr recipe)))
+
+(defun org-shoplist-recipe-get-all-ing (recipe)
+  "Get all ingredients of `RECIPE'."
+  (cdr recipe))
+
+(defun org-shoplist-recipe-get-N-ing (recipe n)
+  "Get from `RECIPE' the `N'th ingredient.
+First = `n' = 1"
+  (elt recipe n))
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
