@@ -3,6 +3,8 @@
 
 (package-file "org-shoplist.el")
 
+(depends-on "calc")
+
 (development
  (depends-on "cl")
  (depends-on "ecukes")
