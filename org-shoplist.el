@@ -18,8 +18,8 @@
 
 (defun org-shoplist-ing-create (amount name)
   "Create a ingredient.
-'AMOUNT' can be a string, a number or a valid sequence.
-'NAME' is a string.
+`AMOUNT' can be a string, a number or a valid sequence.
+`NAME' is a string.
 If one constraint gets disregarded throw error."
   (when (not (stringp name)) (error "Invalid name for ingredient"))
   (when (eq amount nil) (setq amount "0"))
@@ -30,12 +30,16 @@ If one constraint gets disregarded throw error."
 	(list name amount)
       (error "Invalid amount for ingredient"))))
 
+(defun org-shoplist-ing-amount (ing)
+  "Get amount of `ING'.")
+
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
-'NAME' must be a string.
-'INGS' must be vallid ingredients.
-Use ´(org-shoplist-ing-create)' to create valid ingredients."
+`NAME' must be a string.
+`INGS' must be vallid ingredients.
+Use `org-shoplist-ing-create' to create valid ingredients."
   (when (eq name nil) (error "Invalid name for recipe"))
   (cons name ings))
+
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
