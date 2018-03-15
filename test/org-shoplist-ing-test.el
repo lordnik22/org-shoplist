@@ -33,4 +33,10 @@
 
 (ert-deftest org-shoplist-test/ing-create-amount-simple-sequence ()
   (should (equal '("Nuts" (* 100 (var g var-g))) (org-shoplist-ing-create '(* 100 (var g var-g)) "Nuts"))))
+
+(ert-deftest org-shoplist-test/ing-unit-amount-simple-sequence ()
+  (should (eq 'g (org-shoplist-ing-unit (org-shoplist-ing-create "100g" "Nuts")))))
+
+(ert-deftest org-shoplist-test/ing-unit-amount-number ()
+  (should (eq nil (org-shoplist-ing-unit (org-shoplist-ing-create 100 "Nuts")))))
 ;;; org-shoplist-test.el ends here

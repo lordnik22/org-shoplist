@@ -30,8 +30,24 @@ If one constraint gets disregarded throw error."
 	(list name amount)
       (error "Invalid amount for ingredient"))))
 
+(defun org-shoplist-ing-name (ing)
+  "Get name of `ING'."
+  (car ing))
+
 (defun org-shoplist-ing-amount (ing)
-  "Get amount of `ING'.")
+  "Get amount of `ING'."
+  (car (cdr ing)))
+
+(defun org-shoplist-ing-unit (ing)
+  "Get unit of `ING'."
+  (let ((amnt (org-shoplist-ing-amount ing)))
+    (if (numberp amnt)
+	nil
+      (elt (elt amnt 2) 1))))
+
+;;(require 'calc-ext)  (math-read-expr "100g")(* 100 (var g var-g))
+;;calc-aent
+;;(math-evaluate-expr (math-read-expr "100g+100g"))
 
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
