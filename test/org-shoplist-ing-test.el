@@ -40,7 +40,7 @@
 (ert-deftest org-shoplist-test/ing-unit-amount-number ()
   (should (eq nil (org-shoplist-ing-unit (org-shoplist-ing-create 100 "Nuts")))))
 
-(ert-deftest org-shoplist-test/ing-unit-amount-number ()
+(ert-deftest org-shoplist-test/ing-unit-dont-change-match-data ()
   "Match data shouldn't be changed by call."
   (let ((data-before (match-data))
 	(data-after nil))
