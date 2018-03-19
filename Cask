@@ -4,6 +4,7 @@
 (package-file "org-shoplist.el")
 
 (depends-on "calc")
+(depends-on "org")
 
 (development
  (depends-on "cl")
