@@ -48,4 +48,28 @@
 				 (org-shoplist-ing-create "200g" "Salat")
 				 (org-shoplist-ing-create "1tsp" "Pepper")))))
 
+(ert-deftest org-shoplist-test/recipe-read-empty-buffer ()
+  "Get a recipe structure read from a string in buffer where point is at."
+  (org-shoplist-test-test-in-buffer
+   (lambda ()
+     (goto-char 0);;that buffer don't get terminated
+     (should-error (org-shoplist-recipe-read) :type '(error "Can't find a recipe")))))
+
+
+(ert-deftest org-shoplist-test/empty-recipe-read ()
+  "Get a recipe structure read from a string in buffer where point is at."
+  (org-shoplist-test-test-in-buffer
+   (lambda ()
+     (insert "* Test")
+     (goto-char (point-min))
+     (should (equal '("Test") (org-shoplist-recipe-read))))))
+
+(ert-deftest org-shoplist-test/recipe-read-one-liner ()
+  "Get a recipe structure read from a string in buffer where point is at."
+  (org-shoplist-test-test-in-buffer
+   (lambda ()
+     (insert "* Test
+- (200g Nuts) mahlen")
+     (goto-char (point-min))
+     (should (equal '("Test" ("Nuts" (* 200 (var g var-g)))) (org-shoplist-recipe-read))))))
 ;;; org-shoplist-test.el ends here
