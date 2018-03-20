@@ -8,7 +8,7 @@
 
 
 (ert-deftest org-shoplist-test/ing-create-nil-nil ()
-  (should-error (org-shoplist-ing-create nil nil) :type '(error "Invalid name for ingredient")))
+  (should-error (org-shoplist-ing-create nil nil) :type '(error)))
 
 (ert-deftest org-shoplist-test/ing-create-normal ()
   (should (equal '("Nuts" (* 100 (var g var-g))) (org-shoplist-ing-create "100g" "Nuts"))))
