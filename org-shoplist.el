@@ -15,6 +15,7 @@
 ;; There is nothing done, yet.
 ;;; Code:
 (require 'calc-ext)
+(require 'org)
 
 (defconst org-shoplist-ing-re "(\\([1-9][0-9]*\\)\\(.*\\) \\(.+\\))"
   "Match any ingredient.
@@ -27,15 +28,15 @@ group 3: ingredient-name")
 `AMOUNT' can be a string, a number or a valid sequence.
 `NAME' is a string.
 If one constraint gets disregarded throw error."
-  (when (not (stringp name)) (error "Invalid name for ingredient"))
+  (when (not (stringp name)) (error "Invalid `NAME' for ingredient"))
   (when (eq amount nil) (setq amount "0"))
   (when (numberp amount) (setq amount (number-to-string amount)))
   (save-match-data
     (if (and (stringp amount) (string-match "^[0-9]" amount))
 	(list name (math-read-expr amount))
-      (if (and (sequencep amount) (eq (car amount) (intern "*")) (sequencep (cdr amount)))
+      (if (and (listp amount) (eq (car amount) (intern "*")) (listp (cdr amount)))
 	  (list name amount)
-	(error "Invalid amount for ingredient")))))
+	(error "Invalid `AMOUNT' for ingredient")))))
 
 (defun org-shoplist-ing-name (ing)
   "Get name of `ING'."
@@ -82,11 +83,15 @@ First = `n' = 1"
   (elt recipe n))
 
 (defun org-shoplist-recipe-read ()
-  "Assums that at start of recipe.
-Return a recipe structure.
-See `org-shoplist-recipe-create' for more details."
+  "Assums that at beginning of recipe.
+Which is at (beginning-of-line) at heading (╹* Nut Salat...).
+Return a recipe structure or throw error.
+To read a recipe there must be at least a org-heading (name of the recipe).
+See `org-shoplist-recipe-create' for more details on creating general recipes."
+  (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
   (save-match-data
     (let ((recipe-name (progn
+			 ()
 			 (search-forward-regexp org-heading-regexp nil t 1)
 			 (match-string 2)))
 	  (ing (when (search-forward-regexp (org-item-re) nil t 1)

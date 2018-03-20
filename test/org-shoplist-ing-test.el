@@ -8,7 +8,8 @@
 
 
 (ert-deftest org-shoplist-test/ing-create-nil-nil ()
-  (should-error (org-shoplist-ing-create nil nil) :type '(error)))
+  (should (equal '(error "Invalid ‘NAME’ for ingredient")
+		 (should-error (org-shoplist-ing-create nil nil)))))
 
 (ert-deftest org-shoplist-test/ing-create-normal ()
   (should (equal '("Nuts" (* 100 (var g var-g))) (org-shoplist-ing-create "100g" "Nuts"))))
@@ -17,13 +18,15 @@
   (should (equal '("Nuts" 0) (org-shoplist-ing-create nil "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-invalid-number ()
-  (should-error (org-shoplist-ing-create "asdf" "Nuts")))
+  (should (equal '(error "Invalid ‘AMOUNT’ for ingredient")
+		 (should-error (org-shoplist-ing-create "asdf" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-true-number ()
   (should (equal '("Nuts" 100) (org-shoplist-ing-create 100 "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-name-nil ()
-  (should-error (org-shoplist-ing-create "100g" nil)))
+  (should (equal '(error "Invalid ‘NAME’ for ingredient")
+		 (should-error (org-shoplist-ing-create "100g" nil)))))
 
 (ert-deftest org-shoplist-test/ing-create-when-custom-unit ()
   (should (equal '("Nuts" (* 100 (var foo var-foo))) (org-shoplist-ing-create "100foo" "Nuts"))))

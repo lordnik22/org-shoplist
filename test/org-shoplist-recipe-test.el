@@ -8,7 +8,8 @@
 
 (ert-deftest org-shoplist-test/recipe-create-nil ()
   "Should error when passing no name for recipe."
-  (should-error (org-shoplist-recipe-create nil) :type '(error)))
+  (should (string= "Invalid name for recipe"
+		   (car (cdr (should-error (org-shoplist-recipe-create nil) :type '(error)))))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-ing-nil ()
   "Create a recipe without ingredients."
@@ -53,8 +54,8 @@
   (org-shoplist-test-test-in-buffer
    (lambda ()
      (goto-char 0);;that buffer don't get terminated
-     (should-error (org-shoplist-recipe-read) :type '(error)))))
-
+     (should (string= "Not at beginning of recipe"
+		      (car (cdr (should-error (org-shoplist-recipe-read) :type 'error))))))))
 
 (ert-deftest org-shoplist-test/empty-recipe-read ()
   "Read a recipe with no ingredients."
