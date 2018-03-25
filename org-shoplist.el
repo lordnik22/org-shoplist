@@ -18,7 +18,7 @@
 (require 'org)
 
 (defconst org-shoplist-ing-re "(\\([1-9][0-9]*\\)\\(.*\\) \\(.+\\))"
-  "Match any ingredient.
+  "Match an ingredient.
 group 1: number
 group 2: unit
 group 3: ingredient-name")
@@ -60,10 +60,13 @@ If one constraint gets disregarded throw error."
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
 `NAME' must be a string.
-`INGS' must be vallid ingredients.
+`INGS' must be valid ingredients.
 Use `org-shoplist-ing-create' to create valid ingredients."
   (when (eq name nil) (error "Invalid name for recipe"))
-  (cons name ings))
+  (when (listp (car (car ings))) (setq ings (car ings)))
+  (if (or (eq ings nil) (equal ings '(nil)))
+      (list name)
+    (list name ings)))
 
 (defun org-shoplist-recipe-name (recipe)
   "Get name of `RECIPE'."
@@ -82,27 +85,58 @@ Use `org-shoplist-ing-create' to create valid ingredients."
 First = `n' = 1"
   (elt recipe n))
 
+(defun org-shoplist-ing-read (&optional str)
+  "Parse given `STR' and return a list of found ingredients.
+Whenn `STR' is nil read line where point is and parse that line."
+  (when (eq str nil) (setq str (thing-at-point 'line t)))
+  (if (or (eq nil str) (string= str ""))
+      nil
+    (org-shoplist--ing-read-loop str 0 '())))
+
+(defun org-shoplist--ing-read-loop (str start-pos ings)
+  "Helper functions for (org-shoplist-read) which does the recursive matching.
+`STR' is a string where regex is getting matched against.
+`START-POS' is where in string should start.
+`INGS' is a list of the found ingredients."
+  (if (string-match "(\\([1-9][0-9]*\\)\\(\\w+\\)? \\(\\w+\\))" str start-pos)
+      (org-shoplist--ing-read-loop
+       str
+       (match-end 0)
+       (if (eq ings nil)
+	   (list (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str)))
+	 (add-to-list 'ings
+		      (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str)))))
+    (reverse ings)))
+
+(defun org-shoplist--recipe-read-all-ing (stars)
+  "Return a list of ingredient-structures of recipe where point is at.
+`STARS' are the stars of the recipe heading."
+  (beginning-of-line 2)
+  (save-excursion
+    (let* ((ing (org-shoplist-ing-read))
+	   (ing-list nil))
+      (while (and (not (looking-at-p (concat "^" (regexp-quote stars) " ")))
+		  (not (= (point) (point-max))))
+	(setq ing-list (append ing-list ing))
+	(beginning-of-line 2)
+	(setq ing (org-shoplist-ing-read)))
+      ing-list)))
+
 (defun org-shoplist-recipe-read ()
   "Assums that at beginning of recipe.
 Which is at (beginning-of-line) at heading (╹* Nut Salat...).
 Return a recipe structure or throw error.
 To read a recipe there must be at least a org-heading (name of the recipe).
 See `org-shoplist-recipe-create' for more details on creating general recipes."
-  (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
   (save-match-data
-    (let ((recipe-name (progn
-			 ()
-			 (search-forward-regexp org-heading-regexp nil t 1)
-			 (match-string 2)))
-	  (ing (when (search-forward-regexp (org-item-re) nil t 1)
-		 (progn
-		   (search-forward-regexp org-shoplist-ing-re nil t 1)
-		   (org-shoplist-ing-create (concat (match-string 1) (match-string 2)) (match-string 3))))))
-      (when (eq recipe-name nil) (error "Can't find a recipe"))
-      ;; (looking-at org-list-end-re)
-      (if (eq ing nil)
-	  (org-shoplist-recipe-create recipe-name)
-	(org-shoplist-recipe-create recipe-name ing)))))
+    (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
+    (save-excursion
+      (let ((recipe-name (if (or (eq (match-string 2) nil) (string= (match-string 2) ""))
+			     (error "No recipe-name provided")
+			   (match-string 2)))
+	    (ings (progn
+		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
+	(org-shoplist-recipe-create recipe-name ings)))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
