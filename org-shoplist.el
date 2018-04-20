@@ -62,7 +62,7 @@ If one constraint gets disregarded throw error."
 `NAME' must be a string.
 `INGS' must be valid ingredients.
 Use `org-shoplist-ing-create' to create valid ingredients."
-  (when (eq name nil) (error "Invalid name for recipe"))
+  (when (or (eq name nil) (string= name "")) (error (concat "Invalid name for recipe: '" name "'")))
   (when (listp (car (car ings))) (setq ings (car ings)))
   (if (or (eq ings nil) (equal ings '(nil)))
       (list name)
@@ -131,9 +131,10 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
   (save-match-data
     (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
     (save-excursion
-      (let ((recipe-name (if (or (eq (match-string 2) nil) (string= (match-string 2) ""))
-			     (error "No recipe-name provided")
-			   (match-string 2)))
+      (let ((recipe-name
+	     (if (or (eq (match-string 2) nil) (string= (match-string 2) ""))
+		 (error "No recipe-name provided")
+	       (match-string 2)))
 	    (ings (progn
 		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
 	(org-shoplist-recipe-create recipe-name ings)))))
@@ -145,16 +146,23 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
   (list shop-date recipes))
 
 (defun org-shoplist-shoplist-shopdate (shoplist)
-  "Create a shoplist.
+  "Get shopdate of shoplist.
 `SHOPLIST' a string or nil containing shopping day."
 (car shoplist))
 
 (defun org-shoplist-shoplist-recipes (shoplist)
-  "Create a shoplist.
+  "Get recipes of shoplist.
 `SHOPLIST' a string or nil containing shopping day."
   (if (eq nil (car (cdr shoplist)))
       nil
     (car (cdr shoplist))))
+
+(defun org-shoplist-shoplist-read ()
+  "Return a shoplist structure or throw error.
+To read a recipe there must be at least a org-heading (name of the recipe).
+See `org-shoplist-recipe-create' for more details on creating general recipes."
+(org-shoplist-recipe-read))
+
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
