@@ -37,19 +37,25 @@
 (ert-deftest org-shoplist-test/ing-create-amount-simple-sequence ()
   (should (equal '("Nuts" (* 100 (var g var-g))) (org-shoplist-ing-create '(* 100 (var g var-g)) "Nuts"))))
 
-(ert-deftest org-shoplist-test/ing-unit-amount-simple-sequence ()
-  (should (eq 'g (org-shoplist-ing-unit (org-shoplist-ing-create "100g" "Nuts")))))
-
-(ert-deftest org-shoplist-test/ing-unit-amount-number ()
-  (should (eq nil (org-shoplist-ing-unit (org-shoplist-ing-create 100 "Nuts")))))
-
-(ert-deftest org-shoplist-test/ing-unit-dont-change-match-data ()
+(ert-deftest org-shoplist-test/ing-create-dont-change-match-data ()
   "Match data shouldn't be changed by call."
   (let ((data-before (match-data))
 	(data-after nil))
     (org-shoplist-ing-create "100g" "Nuts")
     (setq data-after (match-data))
     (should (equal data-before data-after))))
+
+(ert-deftest org-shoplist-test/ing-amount-only-amount-when-with-unit ()
+    (should (= 100 (org-shoplist-ing-amount '("Nuts" (* 100 (var g var-g)))))))
+
+(ert-deftest org-shoplist-test/ing-amount-when-no-unit ()
+  (should (= 100 (org-shoplist-ing-amount '("Nuts" 100)))))
+
+(ert-deftest org-shoplist-test/ing-unit-amount-with-unit ()
+  (should (eq 'g (org-shoplist-ing-unit '("Nuts" (* 100 (var g var-g)))))))
+
+(ert-deftest org-shoplist-test/ing-unit-amount-number ()
+  (should (eq nil (org-shoplist-ing-unit '("Nuts" 100)))))
 
 (ert-deftest org-shoplist-test/ing-read-str-nil ()
   "Return nil when nil is passed as `STR'."
@@ -122,4 +128,24 @@
      (search-forward-regexp "s" nil t 1)
      (should (equal '(("Nuts" (* 100 (var g var-g))))
 		    (org-shoplist-ing-read))))))
+
+(ert-deftest org-shoplist-test/ing-multiply-ing-nil ()
+  "Return nil when ing is nil."
+  (should (eq nil
+	      (org-shoplist-ing-multiply-amount nil 2))))
+
+(ert-deftest org-shoplist-test/ing-multiply-by-0 ()
+  "Return ing with amount 0 when multiplying by 0."
+  (should (equal '("Nuts" 0)
+		 (org-shoplist-ing-multiply-amount '("Nuts" (* 100 (var g var-g))) 0))))
+
+(ert-deftest org-shoplist-test/ing-multiply-by-1 ()
+  "Return same ing when multiplying by 1."
+  (should (equal '("Nuts" (* 100 (var g var-g)))
+		 (org-shoplist-ing-multiply-amount '("Nuts" (* 100 (var g var-g))) 1))))
+
+(ert-deftest org-shoplist-test/ing-multiply-by-2 ()
+  "Return ing with amount dobbelt multiplying by 2."
+  (should (equal '("Nuts" (* 200 (var g var-g)))
+		 (org-shoplist-ing-multiply-amount '("Nuts" (* 100 (var g var-g))) 2))))
 ;;; org-shoplist-ing-test.el ends here

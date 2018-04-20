@@ -44,14 +44,17 @@ If one constraint gets disregarded throw error."
 
 (defun org-shoplist-ing-amount (ing)
   "Get amount of `ING'."
-  (car (cdr ing)))
+  (let ((amount (car (cdr ing))))
+    (if (numberp amount)
+	amount
+      (car (cdr amount)))))
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of `ING'."
-  (let ((amnt (org-shoplist-ing-amount ing)))
-    (if (numberp amnt)
+  (let ((amount (car (cdr ing))))
+    (if (numberp amount)
 	nil
-      (elt (elt amnt 2) 1))))
+      (car (cdr (car (cdr (cdr amount))))))))
 
 ;;(require 'calc-ext)  (math-read-expr "100g")(* 100 (var g var-g))
 ;;calc-aent
