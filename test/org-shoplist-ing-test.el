@@ -1,4 +1,4 @@
-;;; org-shoplist-test.el --- Tests for org-shoplist
+;;; org-shoplist-ing-test.el --- Tests for org-shoplist
 ;;; Commentary:
 ;; Tests the data structures and functions of org-shoplist
 ;;; Code:
@@ -122,4 +122,4 @@
      (search-forward-regexp "s" nil t 1)
      (should (equal '(("Nuts" (* 100 (var g var-g))))
 		    (org-shoplist-ing-read))))))
-;;; org-shoplist-test.el ends here
+;;; org-shoplist-ing-test.el ends here

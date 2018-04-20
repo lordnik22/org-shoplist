@@ -138,5 +138,23 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
 		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
 	(org-shoplist-recipe-create recipe-name ings)))))
 
+(defun org-shoplist-shoplist-create (shop-date &rest recipes)
+  "Create a shoplist.
+`SHOP-DATE' a string or nil containing shopping day.
+`RECIPES' initial recipes in the shoplist."
+  (list shop-date recipes))
+
+(defun org-shoplist-shoplist-shopdate (shoplist)
+  "Create a shoplist.
+`SHOPLIST' a string or nil containing shopping day."
+(car shoplist))
+
+(defun org-shoplist-shoplist-recipes (shoplist)
+  "Create a shoplist.
+`SHOPLIST' a string or nil containing shopping day."
+  (if (eq nil (car (cdr shoplist)))
+      nil
+    (car (cdr shoplist))))
+
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

@@ -1,4 +1,4 @@
-;;; org-shoplist-test.el --- Tests for org-shoplist
+;;; org-shoplist-recipe-test.el --- Tests for org-shoplist
 ;;; Commentary:
 ;; Tests the data structures and functions of org-shoplist
 ;;; Code:
@@ -230,4 +230,4 @@ Für die Sauce brauchen wir:
      (should (= (point) (point-min))))))
 
 
-;;; org-shoplist-test.el ends here
+;;; org-shoplist-recipe-test.el ends here
