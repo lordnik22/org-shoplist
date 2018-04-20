@@ -131,13 +131,7 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
   (save-match-data
     (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
     (save-excursion
-      (let ((recipe-name
-	     (if (or (eq (match-string 2) nil) (string= (match-string 2) ""))
-		 (error "No recipe-name provided")
-	       (match-string 2)))
-	    (ings (progn
-		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
-	(org-shoplist-recipe-create recipe-name ings)))))
+      (org-shoplist-recipe-create (match-string 2) (org-shoplist--recipe-read-all-ing (match-string 1))))))
 
 (defun org-shoplist-shoplist-create (shop-date &rest recipes)
   "Create a shoplist.
