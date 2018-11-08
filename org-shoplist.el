@@ -17,7 +17,7 @@
 (require 'calc-ext)
 (require 'org)
 
-(defconst org-shoplist-ing-re "(\\([1-9][0-9]*\\)\\(.*\\) \\(.+\\))"
+(defconst org-shoplist-ing-re "(\\([1-9][0-9]*\\)\\(.*?\\) \\(.+?\\))"
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -101,7 +101,7 @@ Whenn `STR' is nil read line where point is and parse that line."
 `STR' is a string where regex is getting matched against.
 `START-POS' is where in string should start.
 `INGS' is a list of the found ingredients."
-  (if (string-match "(\\([1-9][0-9]*\\)\\(\\w+\\)? \\(\\w+\\))" str start-pos)
+  (if (string-match org-shoplist-ing-re str start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
