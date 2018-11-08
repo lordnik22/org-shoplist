@@ -23,7 +23,7 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex "\\([1-9][0-9]*\\)\\([^0-9]*?\\)"
+(defcustom org-shoplist-ing-amount-regex "\\([1-9][0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)"
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
@@ -41,6 +41,7 @@ group 3: ingredient-name"
   :type '(repeat (symbol string string))
   :group 'org-shoplist)
 
+;; Inject custom units
 (eval-after-load "calc-units"
   '(progn
      (setq math-additional-units
@@ -53,14 +54,9 @@ group 3: ingredient-name"
 `NAME' is a string.
 If one constraint gets disregarded throw error."
   (when (not (stringp name)) (error "Invalid `NAME' for ingredient"))
-  (when (eq amount nil) (setq amount "0"))
-  (when (numberp amount) (setq amount (number-to-string amount)))
-  (save-match-data
-					;^\([1-9][0-9]*\)\([^0-9]*?\)$
-					;"\\([1-9][0-9]*\\)\\([^0-9 ]*?\\)"
-    (if (and (stringp amount) (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount))
-	(list name (calc-eval amount))
-      (error "Invalid `AMOUNT' for ingredient"))))
+  (condition-case ex
+      (list name (org-shoplist-ing-amount-validate amount))
+    ('error (error (error-message-string ex)))))
 
 (defun org-shoplist-ing-name (ing)
   "Get name of `ING'."
@@ -70,12 +66,37 @@ If one constraint gets disregarded throw error."
   "Get amount of `ING'."
   (car (cdr ing)))
 
+(defun org-shoplist-ing-amount-validate (amount)
+  "Return `AMOUNT' when it's valid else throw error."
+  (when (eq amount nil) (setq amount "0"))
+  (when (numberp amount) (setq amount (number-to-string amount)))
+  (save-match-data
+    (if (and (stringp amount) (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount))
+	(calc-eval amount)
+      (error "Invalid `AMOUNT'(%s) for ingredient" amount))))
+
 (defun org-shoplist-ing-unit (ing)
   "Get unit of `ING'."
   (let ((amount (org-shoplist-ing-amount ing)))
-    (if (string-match "\\([^0-9 ]+\\)" amount)
+    (if (string-match org-shoplist-ing-unit-regex amount)
 	(match-string 1 amount)
       nil)))
+
+(defun org-shoplist-ing-+ (&rest amounts)
+  "Add `AMOUNTS' toghether return the sum."
+  (condition-case ex
+      (org-shoplist-ing-amount-validate
+       (calc-eval
+	(math-simplify-units
+	 (math-read-expr
+	  (mapconcat (lambda (x)
+		       (cond ((stringp x) x)
+			     ((integerp x) (int-to-string x))
+			     ((eq nil x) "0")
+			     ((listp x) (org-shoplist-ing-amount x))
+			     (t (error "Given `AMOUNT'(%s) can't be converted" x))))
+		     amounts "+")))))
+    ('error (error (error-message-string ex)))))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of `ING' with given `FACTOR'.
@@ -84,18 +105,6 @@ Return new ingredient with modified amount."
     (org-shoplist-ing-create
      (calc-eval (math-simplify-units (math-read-expr (concat (int-to-string factor) "*" (org-shoplist-ing-amount ing)))))
      (org-shoplist-ing-name ing))))
-;M(calc-eval (math-convert-units (math-read-expr "100") (math-read-expr "") ))
-;(math-simplify-units )
-;(math-simplify-units (math-read-expr "1kg+100g") "g")
-;(calc-eval "1kg+100g")
-;(calc-eval (math-read-expr "1kg+100g"))
-;(org-shoplist-ing-amount (org-shoplist-ing-create "2el+100g" "Zucker"))
-;(val (math-read-expr "2*100g"))
-;(calc-eval (math-read-expr "2*100g"))
-;(math-format-number-fancy (math-read-expr "100.00001g") 1)
-;;(require 'calc-ext)  (math-read-expr "100g")(* 100 (var g var-g))
-;;calc-aent
-;;(math-evaluate-expr (math-read-expr "100g+100g"))
 
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
@@ -122,7 +131,7 @@ Use `org-shoplist-ing-create' to create valid ingredients."
 
 (defun org-shoplist-recipe-get-N-ing (recipe n)
   "Get from `RECIPE' the `N'th ingredient.
-First = `n' = 1"
+First = `n' = 0"
   (elt recipe n))
 
 (defun org-shoplist-ing-read (&optional str)
@@ -196,7 +205,6 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
 To read a recipe there must be at least a org-heading (name of the recipe).
 See `org-shoplist-recipe-create' for more details on creating general recipes."
   (org-shoplist-recipe-read))
-
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

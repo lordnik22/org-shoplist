@@ -15,11 +15,11 @@
   (should (equal '("Nuts" "100 g") (org-shoplist-ing-create "100g" "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-nil ()
-  (should (equal '(error "Invalid ‘AMOUNT’ for ingredient")
+  (should (equal '(error "Invalid ‘AMOUNT’(asdf) for ingredient")
 		 (should-error (org-shoplist-ing-create "asdf" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-invalid-number ()
-  (should (equal '(error "Invalid ‘AMOUNT’ for ingredient")
+  (should (equal '(error "Invalid ‘AMOUNT’(asdf) for ingredient")
 		 (should-error (org-shoplist-ing-create "asdf" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-true-number ()
@@ -36,11 +36,11 @@
   (should (equal '("Nuts" "100") (org-shoplist-ing-create 100 "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-amount-simple-sequence ()
-  (should (equal '(error "Invalid ‘AMOUNT’ for ingredient")
+  (should (equal '(error "Invalid ‘AMOUNT’((* 100 (var g var-g))) for ingredient")
 		 (should-error (org-shoplist-ing-create '(* 100 (var g var-g)) "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-is-calc-expr ()
-  (should (equal '(error "Invalid ‘AMOUNT’ for ingredient")
+  (should (equal '(error "Invalid ‘AMOUNT’(100g+200kg) for ingredient")
 		 (should-error (org-shoplist-ing-create "100g+200kg" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-dont-change-match-data ()
@@ -166,4 +166,64 @@
   "Return ing with amount dobbelt multiplying by 2."
   (should (equal (org-shoplist-ing-create "200g" "Nuts")
 		 (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 2))))
+
+(ert-deftest org-shoplist-test/ing-+-nil ()
+  "Add ing with nil return ing."
+  (let ((ing (org-shoplist-ing-amount (org-shoplist-ing-create 100 "Nuts"))))
+    (should (equal ing (org-shoplist-ing-+ ing nil)))))
+
+(ert-deftest org-shoplist-test/ing-+-0 ()
+  "Add ing with 0 return ing."
+  (let ((ing (org-shoplist-ing-create 100 "Nuts")))
+    (should (equal (org-shoplist-ing-amount ing) (org-shoplist-ing-+ ing 0)))))
+
+(ert-deftest org-shoplist-test/ing-+-0g-unit-uncompatible ()
+  "Add ing with 0 return ing."
+  (let ((ing (org-shoplist-ing-create 100 "Nuts")))
+    (should (equal (org-shoplist-ing-amount ing) (org-shoplist-ing-+ ing "0g")))))
+
+(ert-deftest org-shoplist-test/ing-+-0g-compatible ()
+  "Add ing with 0g return ing."
+  (let ((ing (org-shoplist-ing-create "100g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount ing) (org-shoplist-ing-+ ing "0g")))))
+
+(ert-deftest org-shoplist-test/ing-+-200g-200g ()
+  "Add ing multiple amounts return ing with modified amount."
+  (let ((ing (org-shoplist-ing-create "100g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount (org-shoplist-ing-create "500g" "Nuts"))
+		   (org-shoplist-ing-+ ing "200g" "200g")))))
+
+(ert-deftest org-shoplist-test/ing-+-200g+200g ()
+  "Add ing with multiple amounts in one string return ing with modified amount."
+  (let ((ing (org-shoplist-ing-create "100g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount (org-shoplist-ing-create "500g" "Nuts"))
+		   (org-shoplist-ing-+ ing "200g+200g")))))
+
+(ert-deftest org-shoplist-test/ing-+-999g-1kg ()
+  "Add ing with multiple amounts in one string return ing with modified amount."
+  (let ((ing (org-shoplist-ing-create "999g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount (org-shoplist-ing-create "1999g" "Nuts"))
+		   (org-shoplist-ing-+ ing "1kg")))))
+
+(ert-deftest org-shoplist-test/ing-+-999g-1ml ()
+  "Trow error when trying to add grams with mililiters."
+  (let ((ing (org-shoplist-ing-create "999g" "Nuts")))
+    (should (equal '(error "Invalid ‘AMOUNT’(999 g + ml) for ingredient")
+		   (should-error (org-shoplist-ing-+ ing "1ml"))))))
+
+(ert-deftest org-shoplist-test/ing-+-ing ()
+  "Add the amount of two ings togehter."
+  (let ((ing (org-shoplist-ing-create "100g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount (org-shoplist-ing-create "200g" "Nuts"))
+		   (org-shoplist-ing-+ ing ing)))))
+
+(ert-deftest org-shoplist-test/ing-+-random ()
+  "Trow error when trying to add something random."
+  (should (equal '(error "Given ‘AMOUNT’(asdf) can’t be converted")
+		 (should-error (org-shoplist-ing-+ "100g" 'asdf)))))
+
+(ert-deftest org-shoplist-test/ing-+-random-str ()
+  "Trow error when trying to add something random."
+  (should (equal '(error "Invalid ‘AMOUNT’(100 g + asdf) for ingredient")
+		 (should-error (org-shoplist-ing-+ "100g" "asdf")))))
 ;;; org-shoplist-ing-test.el ends here
