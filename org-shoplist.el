@@ -18,6 +18,11 @@
 (require 'calc-units)
 (require 'org)
 
+(defcustom org-shoplist-keyword "TOBUY"
+  "Keyword to mark recies for shopping."
+  :type 'string
+  :group 'org-shoplist)
+
 (defcustom org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string."
   :type 'string
@@ -161,25 +166,26 @@ Whenn `STR' is nil read line where point is and parse that line."
   "Assums that at beginning of recipe.
 Return a list of ingredient-structures of recipe where point is at.
 `STARS' are the stars of the recipe heading."
-  (beginning-of-line 2)
-  (let* ((ing nil)
-	 (ing-list nil))
+  (let ((ing-list nil))
+    (beginning-of-line 2)
     (while (and (not (looking-at-p (concat "^" (regexp-quote stars) " ")))
 		(not (= (point) (point-max))))
-      (setq ing (org-shoplist-ing-read))
-      (setq ing-list (append ing-list ing))
+      (setq ing-list (append ing-list (org-shoplist-ing-read)))
       (beginning-of-line 2))
     ing-list))
 
 (defun org-shoplist-recipe-read ()
   "Assums that at beginning of recipe.
 Which is at (beginning-of-line) at heading (╹* Nut Salat...).
-Return a recipe structure or throw error.
-To read a recipe there must be at least a org-heading (name of the recipe).
-See `org-shoplist-recipe-create' for more details on creating general recipes."
+Return a recipe structure or throw error.  To read a recipe there
+must be at least a org-heading (name of the recipe) and one
+ingredient.
+See `org-shoplist-recipe-create' for more details on creating general
+recipes."
   (save-match-data
     (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
-    (org-shoplist-recipe-create (match-string 2) (org-shoplist--recipe-read-all-ing (match-string 1)))))
+    (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
+		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
 
 (defun org-shoplist-shoplist-create (shop-date &rest recipes)
   "Create a shoplist.
@@ -190,7 +196,7 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
 (defun org-shoplist-shoplist-shopdate (shoplist)
   "Get shopdate of shoplist.
 `SHOPLIST' a string or nil containing shopping day."
-(car shoplist))
+  (car shoplist))
 
 (defun org-shoplist-shoplist-recipes (shoplist)
   "Get recipes of shoplist.
@@ -203,7 +209,13 @@ See `org-shoplist-recipe-create' for more details on creating general recipes."
   "Return a shoplist structure or throw error.
 To read a recipe there must be at least a org-heading (name of the recipe).
 See `org-shoplist-recipe-create' for more details on creating general recipes."
-  (org-shoplist-recipe-read))
+  (let ((recipe-list nil))
+    (beginning-of-line 2)
+    (while (and (not (= (point-max) (point)))
+		(search-forward-regexp org-heading-regexp nil t 1)
+		(progn (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword))))
+      (setq recipe-list (append recipe-list (org-shoplist-recipe-read))))
+    (org-shoplist-shoplist-create (calendar-current-date) recipe-list)))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

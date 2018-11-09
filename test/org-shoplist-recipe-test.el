@@ -70,16 +70,16 @@
 
 (ert-deftest org-shoplist-test/recipe-read-empty-buffer ()
   "Throw an error when buffer is empty."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (goto-char (point-min)) ;;that buffer don't get terminated
+     (goto-char (point-min)) ;;move point that buffer don't get terminated
      (should (equal '(error "Not at beginning of recipe")
 		    (should-error (org-shoplist-recipe-read))))
      (should (= (point) (point-min))))))
 
 (ert-deftest org-shoplist-test/recipe-read-no-name ()
   "Read a recipe with no ingredients."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* ")
      (goto-char (point-min))
@@ -88,7 +88,7 @@
 
 (ert-deftest org-shoplist-test/recipe-read-no-ings ()
   "Read a recipe with no ingredients."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test")
      (goto-char (point-min))
@@ -96,7 +96,7 @@
 
 (ert-deftest org-shoplist-test/recipe-read-all-ing ()
   "Read all ingredients of recipe."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen")
@@ -106,7 +106,7 @@
 
 (ert-deftest org-shoplist-test/recipe-read-all-two-ing ()
   "Read all ingredients of recipe."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen
@@ -122,7 +122,7 @@
 (ert-deftest org-shoplist-test/recipe-read-one-ing ()
   "Read a recipe with one full ingredient.
 Full means with unit, amount and ing-name."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen")
@@ -133,7 +133,7 @@ Full means with unit, amount and ing-name."
 (ert-deftest org-shoplist-test/recipe-read-two-ing ()
   "Read a recipe with two full ingredients.
 Full means with unit, amount and ing-name."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen
@@ -147,7 +147,7 @@ Full means with unit, amount and ing-name."
 (ert-deftest org-shoplist-test/recipe-read-three-ing ()
   "Read a recipe with three full ingredients.
 Full means with unit, amount and ing-name."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen
@@ -164,7 +164,7 @@ Full means with unit, amount and ing-name."
   "Read a recipe with two full ingredients but trash inbetween.
 Full means with unit, amount and ing-name.
 Trash means any text that contains no ingredient."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen
@@ -180,7 +180,7 @@ Trash means any text that contains no ingredient."
   "Read a recipe with two full ingredients but trash inbetween.
 Full means with unit, amount and ing-name.
 Trash means any text that contains no ingredient."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Test
 - (200g Nuts) mahlen
@@ -192,10 +192,10 @@ Achtung: doppelt!
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
-(ert-deftest org-shoplist-test/recipe-read-all-ing-between-two-headers ()
+(ert-deftest org-shoplist-test/recipe-read-between-two-headers ()
   "Read a recipe with two full ingredients.
 Full means with unit, amount and ing-name."
-  (org-shoplist-test-test-in-buffer
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Rezept 1
 Die (200g Nuts) mahlen.
@@ -209,23 +209,21 @@ Für die Sauce brauchen wir:
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
-(ert-deftest org-shoplist-test/recipe-read-all-ing-between-two-nested-headers ()
-  "Read a recipe with two full ingredients.
-Full means with unit, amount and ing-name."
-  (org-shoplist-test-test-in-buffer
+(ert-deftest org-shoplist-test/recipe-read-only-one-header ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Rezept 1
 Die (200g Nuts) mahlen.
-** Nuts information
 Nuts haben einen hohen Protain gehalt.
 Für die Sauce brauchen wir:
 - (200g Nuts)
-* Rezept 2")
+* Rezept 2
+- (200g Flour)")
      (goto-char (point-min))
      (should (equal (list "Rezept 1"
-		      (list (org-shoplist-ing-create "200g" "Nuts")
-			    (org-shoplist-ing-create "200g" "Nuts")))
+			  (list (org-shoplist-ing-create "200g" "Nuts")
+				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
-
 
 ;;; org-shoplist-recipe-test.el ends here
