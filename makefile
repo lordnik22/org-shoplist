@@ -7,6 +7,7 @@ test:
 	${MAKE} inte-test
 
 unit-test:
+	emacs --version
 	${CASK} exec ert-runner
 
 

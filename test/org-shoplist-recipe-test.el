@@ -8,12 +8,12 @@
 
 (ert-deftest org-shoplist-test/recipe-create-nil ()
   "Should error when passing no name for recipe."
-  (should (equal '(error "Invalid name for recipe: ’nil’")
+  (should (equal '(error "Invalid name for recipe: ‘nil’")
 		 (should-error (org-shoplist-recipe-create nil)))))
 
 (ert-deftest org-shoplist-test/recipe-create-empty-string-name ()
   "Should error when passing no name for recipe."
-  (should (equal '(error "Invalid name for recipe: ’’")
+  (should (equal '(error "Invalid name for recipe: ‘’")
 		 (should-error (org-shoplist-recipe-create "")))))
 
 
@@ -83,7 +83,7 @@
    (lambda ()
      (insert "* ")
      (goto-char (point-min))
-     (should (equal '(error "Invalid name for recipe: ’’")
+     (should (equal '(error "Invalid name for recipe: ‘’")
 		    (should-error (org-shoplist-recipe-read)))))))
 
 (ert-deftest org-shoplist-test/recipe-read-no-ings ()
