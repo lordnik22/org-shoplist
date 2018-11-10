@@ -29,12 +29,12 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex "\\([1-9][0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)"
+(defcustom org-shoplist-ing-amount-regex "\\([1-9][0-9]*\\.?[0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)"
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-regex "(\\([1-9][0-9]*\\)\\([^0-9 ]*?\\)[ ]\\(.+?\\))"
+(defcustom org-shoplist-ing-regex "\\([1-9][0-9]*\\.?[0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)[ ]\\(.+?\\))"
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -60,9 +60,7 @@ group 3: ingredient-name"
 ‘NAME’ is a string.
 If one constraint gets disregarded throw error."
   (when (not (stringp name)) (error "Invalid ‘NAME’ for ingredient"))
-  (condition-case ex
-      (list name (org-shoplist-ing-amount-validate amount))
-    ('error (error (error-message-string ex)))))
+  (list name (org-shoplist-ing-amount-validate amount)))
 
 (defun org-shoplist-ing-name (ing)
   "Get name of ‘ING’."
@@ -90,19 +88,17 @@ If one constraint gets disregarded throw error."
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
-  (condition-case ex
-      (org-shoplist-ing-amount-validate
-       (calc-eval
-	(math-simplify-units
-	 (math-read-expr
-	  (mapconcat (lambda (x)
-		       (cond ((stringp x) x)
-			     ((integerp x) (int-to-string x))
-			     ((eq nil x) "0")
-			     ((listp x) (org-shoplist-ing-amount x))
-			     (t (error "Given ‘AMOUNT’(%s) can’t be converted" x))))
-		     amounts "+")))))
-    ('error (error (error-message-string ex)))))
+  (org-shoplist-ing-amount-validate
+   (calc-eval
+    (math-simplify-units
+     (math-read-expr
+      (mapconcat (lambda (x)
+		   (cond ((stringp x) x)
+			 ((integerp x) (int-to-string x))
+			 ((eq nil x) "0")
+			 ((listp x) (org-shoplist-ing-amount x))
+			 (t (error "Given ‘AMOUNT’(%s) can’t be converted" x))))
+		 amounts "+"))))))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
@@ -111,6 +107,45 @@ Return new ingredient with modified amount."
     (org-shoplist-ing-create
      (calc-eval (math-simplify-units (math-read-expr (concat (int-to-string factor) "*" (org-shoplist-ing-amount ing)))))
      (org-shoplist-ing-name ing))))
+
+(defun org-shoplist-ing-read (&optional aggregate str)
+  "‘AGGREGATE’ output when t else return parsed ‘STR’ raw.
+Whenn ‘STR’ is nil read line where point is at."
+  (when (eq str nil) (setq str (thing-at-point 'line)))
+  (if (or (eq nil str) (string= str ""))
+      nil
+    (org-shoplist--ing-read-loop str 0 '() aggregate)))
+
+(defun org-shoplist-ing-+-p (ing1 ing2)
+  "Return t when ‘ING1’ and ‘ING2’ can be summend else nil."
+  (condition-case nil
+      (progn
+	(if (and (string= (org-shoplist-ing-name ing1) (org-shoplist-ing-name ing2)) (org-shoplist-ing-+ ing1 ing2))
+	    t
+	  nil))
+    (error nil)))
+
+(defun org-shoplist--ing-read-loop (str start-pos ings &optional aggregate)
+  "Helper functions for (org-shoplist-read) which does the recursive matching.
+‘STR’ is a string where regex is getting matched against.
+‘START-POS’ is where in string should start.
+‘INGS’ is a list of the found ingredients.
+‘AGGREGATE’ when t"
+  (if (string-match org-shoplist-ing-regex str start-pos)
+      (org-shoplist--ing-read-loop
+       str
+       (match-end 0)
+       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str))))
+	 (if (eq ings nil)
+	     (list new-ing)
+	   (if (not (eq nil aggregate))
+	       (let* ((same-ings (seq-filter (lambda (x) (org-shoplist-ing-+-p new-ing x)) ings))
+		      (new-ings (seq-difference ings same-ings)))
+		 (push (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (push new-ing same-ings)) (org-shoplist-ing-name new-ing))
+		       new-ings))
+	     (push new-ing ings))))
+       aggregate)
+    (reverse ings)))
 
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
@@ -140,29 +175,6 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
 First = ‘n’ = 0"
   (elt recipe n))
 
-(defun org-shoplist-ing-read (&optional str)
-  "Parse given ‘STR’ and return a list of found ingredients.
-Whenn ‘STR’ is nil read line where point is and parse that line."
-  (when (eq str nil) (setq str (thing-at-point 'line)))
-  (if (or (eq nil str) (string= str ""))
-      nil
-    (org-shoplist--ing-read-loop str 0 '())))
-
-(defun org-shoplist--ing-read-loop (str start-pos ings)
-  "Helper functions for (org-shoplist-read) which does the recursive matching.
-‘STR’ is a string where regex is getting matched against.
-‘START-POS’ is where in string should start.
-‘INGS’ is a list of the found ingredients."
-  (if (string-match org-shoplist-ing-regex str start-pos)
-      (org-shoplist--ing-read-loop
-       str
-       (match-end 0)
-       (if (eq ings nil)
-	   (list (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str)))
-	 (add-to-list 'ings
-		      (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str)))))
-    (reverse ings)))
-
 (defun org-shoplist--recipe-read-all-ing (stars)
   "Assums that at beginning of recipe.
 Return a list of ingredient-structures of recipe where point is at.
@@ -188,15 +200,14 @@ recipes."
     (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
 		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
 
-(defun org-shoplist-shoplist-create (shop-date &rest recipes)
+(defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
-‘SHOP-DATE’ a string or nil containing shopping day.
 ‘RECIPES’ initial recipes in the shoplist."
-  (list shop-date recipes))
+  (list (calendar-current-date) recipes))
 
 (defun org-shoplist-shoplist-shopdate (shoplist)
   "Get shopdate of shoplist.
-‘SHOPLIST’ a string or nil containing shopping day."
+‘SHOPLIST’ of which the date should be extracted."
   (car shoplist))
 
 (defun org-shoplist-shoplist-recipes (shoplist)

@@ -64,38 +64,38 @@
   (should (eq nil (org-shoplist-ing-unit (org-shoplist-ing-create "100" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-read-str-nil ()
-  "Return nil when nil is passed as `STR'."
-  (should (eq nil (org-shoplist-ing-read nil))))
+  "Return nil when nil is passed as ‘STR’."
+  (should (eq nil (org-shoplist-ing-read))))
 
 (ert-deftest org-shoplist-test/ing-read-empty-str ()
   "Return nil when empty string is passed."
-  (should (eq nil (org-shoplist-ing-read ""))))
+  (should (eq nil (org-shoplist-ing-read nil ""))))
 
 (ert-deftest org-shoplist-test/ing-read-str-only-ing ()
   "Return one ingredient-structure when str contains only a ing."
-  (should (equal (list (org-shoplist-ing-create "100g" "Nuts")) (org-shoplist-ing-read "(100g Nuts)"))))
+  (should (equal (list (org-shoplist-ing-create "100g" "Nuts")) (org-shoplist-ing-read nil "(100g Nuts)"))))
 
 (ert-deftest org-shoplist-test/ing-read-str-only-trash ()
   "Return nil when str is not empty-string but contains only trash."
-  (should (equal nil (org-shoplist-ing-read "This is trash"))))
+  (should (equal nil (org-shoplist-ing-read nil "This is trash"))))
 
 (ert-deftest org-shoplist-test/ing-read-str-trash-with-one-ing ()
   "Return one ingredient-structure when str contains one ingredient"
-  (should (equal (list (org-shoplist-ing-create "100g" "Nuts")) (org-shoplist-ing-read "This (100g Nuts) is trash"))))
+  (should (equal (list (org-shoplist-ing-create "100g" "Nuts")) (org-shoplist-ing-read nil "This (100g Nuts) is trash"))))
 
 (ert-deftest org-shoplist-test/ing-read-str-two-ings ()
   "Return a list with two ingredient-structures when str contains two ingredient"
   (should (equal (list
 		  (org-shoplist-ing-create "100g" "Nuts")
 		  (org-shoplist-ing-create "100ml" "Milk"))
-		 (org-shoplist-ing-read "(100g Nuts)(100ml Milk)"))))
+		 (org-shoplist-ing-read nil "(100g Nuts)(100ml Milk)"))))
 
 (ert-deftest org-shoplist-test/ing-read-str-two-ings-with-trash ()
   "Return a list with two ingredient-structures when str contains two ingredient"
   (should (equal (list
 		  (org-shoplist-ing-create "100g" "Nuts")
 		  (org-shoplist-ing-create "100ml" "Milk"))
-		 (org-shoplist-ing-read "This is (100g Nuts) much (100ml Milk) trash."))))
+		 (org-shoplist-ing-read nil "This is (100g Nuts) much (100ml Milk) trash."))))
 
 (ert-deftest org-shoplist-test/ing-read-str-three-ings ()
   "Return a list with three ingredient-structures when str contains thee ingredient"
@@ -103,7 +103,7 @@
 		  (org-shoplist-ing-create "100g" "Nuts")
 		  (org-shoplist-ing-create "100ml" "Milk")
 		  (org-shoplist-ing-create "100kg" "Flour"))
-		 (org-shoplist-ing-read "(100g Nuts)(100ml Milk)(100kg Flour)"))))
+		 (org-shoplist-ing-read nil "(100g Nuts)(100ml Milk)(100kg Flour)"))))
 
 (ert-deftest org-shoplist-test/ing-read-str-four-ings ()
   "Return a list with four ingredient-structures when str contains four ingredient"
@@ -112,7 +112,7 @@
 		  (org-shoplist-ing-create "100ml" "Milk")
 		  (org-shoplist-ing-create "100kg" "Flour")
 		  (org-shoplist-ing-create "1" "Egg"))
-		 (org-shoplist-ing-read "(100g Nuts)(100ml Milk)(100kg Flour)(1 Egg)"))))
+		 (org-shoplist-ing-read nil "(100g Nuts)(100ml Milk)(100kg Flour)(1 Egg)"))))
 
 (ert-deftest org-shoplist-test/ing-read-no-pars-read-at-point ()
   "Parse line where point is at when no parameters passed"
@@ -141,6 +141,16 @@
      (search-forward-regexp "s" nil t 1)
      (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
 		    (org-shoplist-ing-read))))))
+
+(ert-deftest org-shoplist-test/ing-read-twice-same-ing ()
+  "Create two ings even if they are the same."
+  (should (equal (list (org-shoplist-ing-create "100g" "Nuts") (org-shoplist-ing-create "100g" "Nuts"))
+		 (org-shoplist-ing-read nil "(100g Nuts)(100g Nuts)"))))
+
+(ert-deftest org-shoplist-test/ing-read-twice-same-ing-aggregate ()
+  "Aggregate two ings when they are exatcly the same."
+  (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-ing-read t "(100g Nuts)(100g Nuts)"))))
 
 (ert-deftest org-shoplist-test/ing-multiply-ing-nil ()
   "Return error when passing invalid ingredients."
