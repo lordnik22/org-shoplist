@@ -58,14 +58,6 @@ group 3: ingredient-name"
 ;; Inject custom units
 (eval-after-load "calc-units" '(progn (add-to-list 'math-additional-units org-shoplist-additional-units)))
 
-(defun org-shoplist-ing-create (amount name)
-  "Create an ingredient.
-‘AMOUNT’ can be a string, a number or a valid sequence.
-‘NAME’ is a string.
-If one constraint gets disregarded throw error."
-  (when (not (stringp name)) (error "Invalid ‘NAME’(%s) for ingredient" name))
-  (list name (org-shoplist-ing-amount-validate amount)))
-
 (defun org-shoplist-ing-name (ing)
   "Get name of ‘ING’."
   (car ing))
@@ -74,14 +66,13 @@ If one constraint gets disregarded throw error."
   "Get amount of ‘ING’."
   (car (cdr ing)))
 
-(defun org-shoplist-ing-amount-validate (amount)
+(defun org-shoplist--ing-validate-amount (amount)
   "Return ‘AMOUNT’ when it’s valid else throw error."
   (when (eq amount nil) (setq amount "0"))
   (when (numberp amount) (setq amount (number-to-string amount)))
-  (save-match-data
-    (if (and (stringp amount) (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount))
-	(calc-eval amount)
-      (error "Invalid ‘AMOUNT’(%s) for ingredient" amount))))
+  (if (and (stringp amount) (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount))
+      (save-match-data (calc-eval amount))
+    (error "Invalid ‘AMOUNT’(%s) for ingredient" amount)))
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of ‘ING’."
@@ -90,9 +81,36 @@ If one constraint gets disregarded throw error."
 	(match-string 1 amount)
       nil)))
 
+(defun org-shoplist-ing-group (ing)
+  "Get group of ‘ING’."
+  (car (cdr (cdr ing))))
+
+(defun org-shoplist--ing-find-unit-group (amount)
+  "Find the ground unit of ‘AMOUNT’s unit.
+When ‘AMOUNT’ nil, return nil"
+  (let ((unit (match-string 4 amount)))
+    (if (eq unit nil)
+	nil
+      (let ((next-unit (car (last (seq-find (lambda (x) (equal (intern unit) (car x))) math-units-table)))))
+	(if (eq next-unit nil)
+	    unit
+	  (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") next-unit)
+	  (org-shoplist--ing-find-unit-group next-unit))))))
+
+(defun org-shoplist-ing-create (amount name)
+  "Create an ingredient.
+‘AMOUNT’ can be a string, a number or a valid sequence.
+‘NAME’ is a string.
+If one constraint gets disregarded throw error."
+  (save-match-data
+    (when (not (stringp name)) (error "Invalid ‘NAME’(%s) for ingredient" name))
+    (list name
+	  (org-shoplist--ing-validate-amount amount)
+	  (org-shoplist--ing-find-unit-group amount))))
+
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
-  (org-shoplist-ing-amount-validate
+  (org-shoplist--ing-validate-amount
    (calc-eval
     (math-simplify-units
      (math-read-expr
