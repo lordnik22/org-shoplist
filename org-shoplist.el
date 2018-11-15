@@ -29,12 +29,20 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex "\\([1-9][0-9]*\\.?[0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)"
+(defcustom org-shoplist-ing-amount-regex '(concat
+			       "\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
+			       "[YZEPTGMkKhHDdcmunpfazy]?\\("
+			       (mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units org-shoplist-additional-units) "\\|")
+			       "\\)\\)?")
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-regex "\\([1-9][0-9]*\\.?[0-9]*\\)\\([^0-9+\\-\\*\\/]*?\\)[ ]\\(.+?\\))"
+(defcustom org-shoplist-ing-regex '(concat
+			"(\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
+			"[YZEPTGMkKhHDdcmunpfazy]?\\("
+			(mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units org-shoplist-additional-units) "\\|")
+			"\\)\\)?[ ]\\(.+?\\))")
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -48,18 +56,14 @@ group 3: ingredient-name"
   :group 'org-shoplist)
 
 ;; Inject custom units
-(eval-after-load "calc-units"
-  '(progn
-     (setq math-additional-units
-	   org-shoplist-additional-units
-           math-units-table nil)))
+(eval-after-load "calc-units" '(progn (add-to-list 'math-additional-units org-shoplist-additional-units)))
 
 (defun org-shoplist-ing-create (amount name)
   "Create an ingredient.
 ‘AMOUNT’ can be a string, a number or a valid sequence.
 ‘NAME’ is a string.
 If one constraint gets disregarded throw error."
-  (when (not (stringp name)) (error "Invalid ‘NAME’ for ingredient"))
+  (when (not (stringp name)) (error "Invalid ‘NAME’(%s) for ingredient" name))
   (list name (org-shoplist-ing-amount-validate amount)))
 
 (defun org-shoplist-ing-name (ing)
@@ -75,7 +79,7 @@ If one constraint gets disregarded throw error."
   (when (eq amount nil) (setq amount "0"))
   (when (numberp amount) (setq amount (number-to-string amount)))
   (save-match-data
-    (if (and (stringp amount) (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount))
+    (if (and (stringp amount) (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount))
 	(calc-eval amount)
       (error "Invalid ‘AMOUNT’(%s) for ingredient" amount))))
 
@@ -131,11 +135,11 @@ Whenn ‘STR’ is nil read line where point is at."
 ‘START-POS’ is where in string should start.
 ‘INGS’ is a list of the found ingredients.
 ‘AGGREGATE’ when t"
-  (if (string-match org-shoplist-ing-regex str start-pos)
+  (if (string-match (eval org-shoplist-ing-regex) str start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
-       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 2 str)) (match-string 3 str))))
+       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 3 str)) (match-string 5 str))))
 	 (if (eq ings nil)
 	     (list new-ing)
 	   (if (not (eq nil aggregate))
@@ -175,19 +179,20 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
 First = ‘n’ = 0"
   (elt recipe n))
 
-(defun org-shoplist--recipe-read-all-ing (stars)
+(defun org-shoplist--recipe-read-all-ing (stars &optional aggregate)
   "Assums that at beginning of recipe.
 Return a list of ingredient-structures of recipe where point is at.
-‘STARS’ are the stars of the recipe heading."
+‘STARS’ are the stars of the recipe heading.
+‘AGGREGATE’ ingredients when set."
    (let ((ing-list nil))
     (beginning-of-line 2)
     (while (and (not (looking-at-p (concat "^" (regexp-quote stars) " ")))
 		(not (= (point) (point-max))))
-      (setq ing-list (append ing-list (org-shoplist-ing-read)))
+      (setq ing-list (append ing-list (org-shoplist-ing-read aggregate)))
       (beginning-of-line 2))
     ing-list))
 
-(defun org-shoplist-recipe-read ()
+(defun org-shoplist-recipe-read (&optional aggregate)
   "Assums that at beginning of recipe.
 Which is at (beginning-of-line) at heading (╹* Nut Salat...).
 Return a recipe structure or throw error.  To read a recipe there

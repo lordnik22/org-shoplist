@@ -226,4 +226,17 @@ Für die Sauce brauchen wir:
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
+(ert-deftest org-shoplist-test/recipe-read-aggregate ()
+  "Aggreage a recipe correctly.")
+
+(ert-deftest org-shoplist-test/recipe-read-one-ingredient-with-100-ing ()
+  "Read a recipe with 100 ing to see performance of regex."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert-file-contents "recipe-with-100-ing.org")
+     (goto-char (point-min))
+     (should (equal (list "Recipe 1"
+			  (list (org-shoplist-ing-create "100g" "Nuts")))
+		    (org-shoplist-recipe-read t))))))
+
 ;;; org-shoplist-recipe-test.el ends here
