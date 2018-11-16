@@ -130,13 +130,27 @@ Return new ingredient with modified amount."
      (calc-eval (math-simplify-units (math-read-expr (concat (int-to-string factor) "*" (org-shoplist-ing-amount ing)))))
      (org-shoplist-ing-name ing))))
 
+(defun org-shoplist-ing-aggregate (&rest ings)
+  "Aggregate ‘INGS’."
+  (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x))) ings))
+	(aggregate-ings (list)))
+    (while (not (eq nil (car group-ings)))
+      (setq aggregate-ings (cons (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (cdr (car group-ings)))
+					      (car (car (car group-ings))))
+				 aggregate-ings))
+      (setq group-ings (cdr group-ings)))
+    aggregate-ings))
+
 (defun org-shoplist-ing-read (&optional aggregate str)
   "‘AGGREGATE’ output when t else return parsed ‘STR’ raw.
 Whenn ‘STR’ is nil read line where point is at."
   (when (eq str nil) (setq str (thing-at-point 'line)))
   (if (or (eq nil str) (string= str ""))
       nil
-    (org-shoplist--ing-read-loop str 0 '() aggregate)))
+    (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
+      (if aggregate
+	  (apply 'org-shoplist-ing-aggregate read-ings)
+	(reverse read-ings)))))
 
 (defun org-shoplist-ing-+-p (ing1 ing2)
   "Return t when ‘ING1’ and ‘ING2’ can be summend else nil."
@@ -147,12 +161,11 @@ Whenn ‘STR’ is nil read line where point is at."
 	  nil))
     (error nil)))
 
-(defun org-shoplist--ing-read-loop (str start-pos ings &optional aggregate)
+(defun org-shoplist--ing-read-loop (str start-pos ings)
   "Helper functions for (org-shoplist-read) which does the recursive matching.
 ‘STR’ is a string where regex is getting matched against.
 ‘START-POS’ is where in string should start.
-‘INGS’ is a list of the found ingredients.
-‘AGGREGATE’ when t"
+‘INGS’ is a list of the found ingredients."
   (if (string-match (eval org-shoplist-ing-regex) str start-pos)
       (org-shoplist--ing-read-loop
        str
@@ -160,14 +173,8 @@ Whenn ‘STR’ is nil read line where point is at."
        (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 3 str)) (match-string 5 str))))
 	 (if (eq ings nil)
 	     (list new-ing)
-	   (if (not (eq nil aggregate))
-	       (let* ((same-ings (seq-filter (lambda (x) (org-shoplist-ing-+-p new-ing x)) ings))
-		      (new-ings (seq-difference ings same-ings)))
-		 (push (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (push new-ing same-ings)) (org-shoplist-ing-name new-ing))
-		       new-ings))
-	     (push new-ing ings))))
-       aggregate)
-    (reverse ings)))
+	   (push new-ing ings))))
+    ings))
 
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.
@@ -197,16 +204,15 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
 First = ‘n’ = 0"
   (elt recipe n))
 
-(defun org-shoplist--recipe-read-all-ing (stars &optional aggregate)
+(defun org-shoplist--recipe-read-all-ing (stars)
   "Assums that at beginning of recipe.
 Return a list of ingredient-structures of recipe where point is at.
-‘STARS’ are the stars of the recipe heading.
-‘AGGREGATE’ ingredients when set."
+‘STARS’ are the stars of the recipe heading."
    (let ((ing-list nil))
     (beginning-of-line 2)
     (while (and (not (looking-at-p (concat "^" (regexp-quote stars) " ")))
 		(not (= (point) (point-max))))
-      (setq ing-list (append ing-list (org-shoplist-ing-read aggregate)))
+      (setq ing-list (append ing-list (org-shoplist-ing-read)))
       (beginning-of-line 2))
     ing-list))
 
@@ -216,12 +222,14 @@ Which is at (beginning-of-line) at heading (╹* Nut Salat...).
 Return a recipe structure or throw error.  To read a recipe there
 must be at least a org-heading (name of the recipe) and one
 ingredient.
+‘AGGREGATE’ ingredients when t.
 See ‘org-shoplist-recipe-create’ for more details on creating general
 recipes."
   (save-match-data
     (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
-    (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
-		    (org-shoplist--recipe-read-all-ing (match-string 1)))))
+    (let ((read-ings (save-match-data (org-shoplist--recipe-read-all-ing (match-string 1)))))
+      (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
+		      (if aggregate (apply 'org-shoplist-ing-aggregate read-ings) read-ings)))))
 
 (defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
