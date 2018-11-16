@@ -15,6 +15,7 @@
 ;; There is nothing done, yet.
 ;;; Code:
 (require 'subr-x)
+(require 'seq)
 (require 'calc-ext)
 (require 'calc-units)
 (require 'org)
@@ -32,7 +33,7 @@
 (defcustom org-shoplist-ing-amount-regex '(concat
 			       "\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
 			       "[YZEPTGMkKhHDdcmunpfazy]?\\("
-			       (mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units org-shoplist-additional-units) "\\|")
+			       (mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units math-additional-units) "\\|")
 			       "\\)\\)?")
   "Match an amount in a string."
   :type 'string
@@ -41,7 +42,7 @@
 (defcustom org-shoplist-ing-regex '(concat
 			"(\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
 			"[YZEPTGMkKhHDdcmunpfazy]?\\("
-			(mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units org-shoplist-additional-units) "\\|")
+			(mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units math-additional-units) "\\|")
 			"\\)\\)?[ ]\\(.+?\\))")
   "Match an ingredient.
 group 1: number
@@ -50,13 +51,14 @@ group 3: ingredient-name"
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-additional-units '(())
+(defcustom org-shoplist-additional-units nil
   "Additional units that are needed for recipes with special units."
   :type '(repeat (symbol string string))
   :group 'org-shoplist)
 
 ;; Inject custom units
-(eval-after-load "calc-units" '(progn (add-to-list 'math-additional-units org-shoplist-additional-units)))
+(when (not (eq nil org-shoplist-additional-units))
+  (eval-after-load "calc-units" '(progn (apply 'add-to-list 'math-additional-units org-shoplist-additional-units))))
 
 (defun org-shoplist-ing-name (ing)
   "Get name of ‘ING’."
@@ -70,7 +72,10 @@ group 3: ingredient-name"
   "Return ‘AMOUNT’ when it’s valid else throw error."
   (when (eq amount nil) (setq amount "0"))
   (when (numberp amount) (setq amount (number-to-string amount)))
-  (if (and (stringp amount) (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount))
+  (if (and (stringp amount)
+	   (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount)
+	   (or (string= "" (match-string 1 amount))
+	       (< 0 (string-to-number (match-string 1 amount)))))
       (save-match-data (calc-eval amount))
     (error "Invalid ‘AMOUNT’(%s) for ingredient" amount)))
 
@@ -88,14 +93,7 @@ group 3: ingredient-name"
 (defun org-shoplist--ing-find-unit-group (amount)
   "Find the ground unit of ‘AMOUNT’s unit.
 When ‘AMOUNT’ nil, return nil"
-  (let ((unit (match-string 4 amount)))
-    (if (eq unit nil)
-	nil
-      (let ((next-unit (car (last (seq-find (lambda (x) (equal (intern unit) (car x))) math-units-table)))))
-	(if (eq next-unit nil)
-	    unit
-	  (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") next-unit)
-	  (org-shoplist--ing-find-unit-group next-unit))))))
+  (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
 (defun org-shoplist-ing-create (amount name)
   "Create an ingredient.
@@ -104,9 +102,10 @@ When ‘AMOUNT’ nil, return nil"
 If one constraint gets disregarded throw error."
   (save-match-data
     (when (not (stringp name)) (error "Invalid ‘NAME’(%s) for ingredient" name))
-    (list name
-	  (org-shoplist--ing-validate-amount amount)
-	  (org-shoplist--ing-find-unit-group amount))))
+    (let ((valid-amount (org-shoplist--ing-validate-amount amount)))
+      (list name
+	    valid-amount
+	    (org-shoplist--ing-find-unit-group valid-amount)))))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
@@ -116,7 +115,7 @@ If one constraint gets disregarded throw error."
      (math-read-expr
       (mapconcat (lambda (x)
 		   (cond ((stringp x) x)
-			 ((integerp x) (int-to-string x))
+			 ((integerp x) (number-to-string x))
 			 ((eq nil x) "0")
 			 ((listp x) (org-shoplist-ing-amount x))
 			 (t (error "Given ‘AMOUNT’(%s) can’t be converted" x))))
@@ -127,7 +126,7 @@ If one constraint gets disregarded throw error."
 Return new ingredient with modified amount."
   (if (= factor 0) nil
     (org-shoplist-ing-create
-     (calc-eval (math-simplify-units (math-read-expr (concat (int-to-string factor) "*" (org-shoplist-ing-amount ing)))))
+     (calc-eval (math-simplify-units (math-read-expr (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing)))))
      (org-shoplist-ing-name ing))))
 
 (defun org-shoplist-ing-aggregate (&rest ings)
