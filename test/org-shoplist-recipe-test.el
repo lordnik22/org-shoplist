@@ -101,7 +101,7 @@
      (insert "* Test
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test" (list (org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (org-shoplist-recipe-create "Test" (list (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
 (ert-deftest org-shoplist-test/recipe-read-all-two-ing ()
@@ -112,9 +112,9 @@
 - (200g Nuts) mahlen
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test"
-			  (list (org-shoplist-ing-create "200g" "Nuts")
-				(org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (org-shoplist-recipe-create "Test"
+			     (list (org-shoplist-ing-create "200g" "Nuts")
+				   (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read)))
      (should (= 49 (point))))))
 
@@ -233,7 +233,7 @@ Für die Sauce brauchen wir:
   "Read a recipe with 100 ing to see performance of regex."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert-file-contents "recipe-with-100-ing.org")
+     (insert-file-contents "file/recipe-with-100-ing.org")
      (goto-char (point-min))
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))

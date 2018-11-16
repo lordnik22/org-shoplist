@@ -44,20 +44,20 @@
   (setq math-units-table nil)
   (message "%s" math-additional-units))
 
-(defun org-shoplist-test-test-in-buffer (func)
+(defun org-shoplist-test-test-in-buffer (func-in-buffer)
   "Execute a test in temp-buffer and leave everthing in same state as before.
 'FUNC' is what should be done in the temp-buffer."
   (unwind-protect
       (with-current-buffer (get-buffer-create org-shoplist-test-default-buffer)
 	(org-shoplist-test-load-custom-var)
-	(funcall func))
+	(funcall func-in-buffer))
     (kill-buffer org-shoplist-test-default-buffer)
     (org-shoplist-test-reset-custom-var)))
-(defun org-shoplist-test-test-in-org-buffer (func)
+(defun org-shoplist-test-test-in-org-buffer (func-in-org-buffer)
   "Execute a test in temp-buffer and leave everthing in same state as before.
 'FUNC' is what should be done in the temp-buffer."
   (org-shoplist-test-test-in-buffer
    (lambda ()
      (org-mode)
-     (funcall func))))
+     (funcall func-in-org-buffer))))
 ;;; test-helper.el ends here

@@ -30,12 +30,12 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]*\\)"
+(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]*\\)"
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]+?\\)[ ]\\(.+?\\))"
+(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]+?\\)[ ]\\(.+?\\))"
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -119,7 +119,9 @@ If one constraint gets disregarded throw error."
 Return new ingredient with modified amount."
   (if (= factor 0) nil
     (org-shoplist-ing-create
-     (calc-eval (math-simplify-units (math-read-expr (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing)))))
+     (calc-eval (math-to-standard-units
+		 (math-read-expr (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing)))
+		 nil))
      (org-shoplist-ing-name ing))))
 
 (defun org-shoplist-ing-aggregate (&rest ings)
