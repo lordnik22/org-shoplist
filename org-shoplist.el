@@ -30,20 +30,12 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex '(concat
-			       "\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
-			       "[YZEPTGMkKhHDdcmunpfazy]?\\("
-			       (mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units math-additional-units) "\\|")
-			       "\\)\\)?")
+(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]*\\)"
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-regex '(concat
-			"(\\([1-9]?[0-9]*\\.?[0-9]*\\)\\([ ]?\\)\\("
-			"[YZEPTGMkKhHDdcmunpfazy]?\\("
-			(mapconcat (lambda (x) (symbol-name (car x))) (append math-standard-units math-additional-units) "\\|")
-			"\\)\\)?[ ]\\(.+?\\))")
+(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]+?\\)[ ]\\(.+?\\))"
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -73,7 +65,7 @@ group 3: ingredient-name"
   (when (eq amount nil) (setq amount "0"))
   (when (numberp amount) (setq amount (number-to-string amount)))
   (if (and (stringp amount)
-	   (string-match (concat "^" (eval org-shoplist-ing-amount-regex) "$") amount)
+	   (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount)
 	   (or (string= "" (match-string 1 amount))
 	       (< 0 (string-to-number (match-string 1 amount)))))
       (save-match-data (calc-eval amount))
@@ -111,7 +103,7 @@ If one constraint gets disregarded throw error."
   "Add ‘AMOUNTS’ toghether return the sum."
   (org-shoplist--ing-validate-amount
    (calc-eval
-    (math-simplify-units
+    (math-to-standard-units
      (math-read-expr
       (mapconcat (lambda (x)
 		   (cond ((stringp x) x)
@@ -119,7 +111,8 @@ If one constraint gets disregarded throw error."
 			 ((eq nil x) "0")
 			 ((listp x) (org-shoplist-ing-amount x))
 			 (t (error "Given ‘AMOUNT’(%s) can’t be converted" x))))
-		 amounts "+"))))))
+		 amounts "+"))
+     nil))))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
@@ -156,11 +149,11 @@ Whenn ‘STR’ is nil read line where point is at."
 ‘STR’ is a string where regex is getting matched against.
 ‘START-POS’ is where in string should start.
 ‘INGS’ is a list of the found ingredients."
-  (if (string-match (eval org-shoplist-ing-regex) str start-pos)
+  (if (string-match org-shoplist-ing-regex str start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
-       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 3 str)) (match-string 5 str))))
+       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 3 str)) (match-string 4 str))))
 	 (if (eq ings nil)
 	     (list new-ing)
 	   (push new-ing ings))))
