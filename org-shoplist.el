@@ -152,15 +152,6 @@ Whenn ‘STR’ is nil read line where point is at."
 	  (apply 'org-shoplist-ing-aggregate read-ings)
 	(reverse read-ings)))))
 
-(defun org-shoplist-ing-+-p (ing1 ing2)
-  "Return t when ‘ING1’ and ‘ING2’ can be summend else nil."
-  (condition-case nil
-      (progn
-	(if (and (string= (org-shoplist-ing-name ing1) (org-shoplist-ing-name ing2)) (org-shoplist-ing-+ ing1 ing2))
-	    t
-	  nil))
-    (error nil)))
-
 (defun org-shoplist--ing-read-loop (str start-pos ings)
   "Helper functions for (org-shoplist-read) which does the recursive matching.
 ‘STR’ is a string where regex is getting matched against.
