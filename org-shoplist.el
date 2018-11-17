@@ -30,12 +30,12 @@
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]*\\)"
+(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t.]*\\)"
   "Match an amount in a string."
   :type 'string
   :group 'org-shoplist)
 
-(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t]+?\\)[ ]\\(.+?\\))"
+(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t)(]+?\\)[ ]\\(.+?\\))"
   "Match an ingredient.
 group 1: number
 group 2: unit
@@ -44,7 +44,8 @@ group 3: ingredient-name"
   :group 'org-shoplist)
 
 (defcustom org-shoplist-additional-units nil
-  "Additional units that are needed for recipes with special units."
+  "Additional units that are needed for recipes with special units.
+Beaware that the unit can't contain dots."
   :type '(repeat (symbol string string))
   :group 'org-shoplist)
 
@@ -69,7 +70,7 @@ group 3: ingredient-name"
 	   (or (string= "" (match-string 1 amount))
 	       (< 0 (string-to-number (match-string 1 amount)))))
       (save-match-data (calc-eval amount))
-    (error "Invalid ‘AMOUNT’(%s) for ingredient" amount)))
+    (user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount)))
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of ‘ING’."
@@ -93,7 +94,7 @@ When ‘AMOUNT’ nil, return nil"
 ‘NAME’ is a string.
 If one constraint gets disregarded throw error."
   (save-match-data
-    (when (not (stringp name)) (error "Invalid ‘NAME’(%s) for ingredient" name))
+    (when (not (stringp name)) (user-error "Invalid ‘NAME’(%s) for ingredient" name))
     (let ((valid-amount (org-shoplist--ing-validate-amount amount)))
       (list name
 	    valid-amount
@@ -110,7 +111,7 @@ If one constraint gets disregarded throw error."
 			 ((integerp x) (number-to-string x))
 			 ((eq nil x) "0")
 			 ((listp x) (org-shoplist-ing-amount x))
-			 (t (error "Given ‘AMOUNT’(%s) can’t be converted" x))))
+			 (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
 		 amounts "+"))
      nil))))
 
@@ -166,7 +167,7 @@ Whenn ‘STR’ is nil read line where point is at."
 ‘NAME’ must be a string.
 ‘INGS’ must be valid ingredients.
 Use ‘org-shoplist-ing-create’ to create valid ingredients."
-  (when (or (eq name nil) (string= name "")) (error "Invalid name for recipe: ‘%s’" name))
+  (when (or (eq name nil) (string= name "")) (user-error "Invalid name for recipe: ‘%s’" name))
   (when (listp (car (car ings))) (setq ings (car ings)))
   (if (or (eq ings nil) (equal ings '(nil)))
       nil
@@ -211,7 +212,7 @@ ingredient.
 See ‘org-shoplist-recipe-create’ for more details on creating general
 recipes."
   (save-match-data
-    (when (not (looking-at org-heading-regexp)) (error "Not at beginning of recipe"))
+    (when (not (looking-at org-heading-regexp)) (user-error "Not at beginning of recipe"))
     (let ((read-ings (save-match-data (org-shoplist--recipe-read-all-ing (match-string 1)))))
       (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
 		      (if aggregate (apply 'org-shoplist-ing-aggregate read-ings) read-ings)))))
@@ -233,10 +234,11 @@ recipes."
       nil
     (car (cdr shoplist))))
 
-(defun org-shoplist-shoplist-read ()
+(defun org-shoplist-shoplist-read (&optional aggregate)
   "Return a shoplist structure or throw error.
 To read a recipe there must be at least a org-heading (name of the recipe).
-See ‘org-shoplist-recipe-create’ for more details on creating general recipes."
+See ‘org-shoplist-recipe-create’ for more details on creating general recipes.
+‘AGGREGATE’ ingredients when t."
   (let ((recipe-list nil))
     (beginning-of-line 2)
     (while (and (not (= (point-max) (point)))

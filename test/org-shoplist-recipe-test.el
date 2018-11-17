@@ -8,12 +8,12 @@
 
 (ert-deftest org-shoplist-test/recipe-create-nil ()
   "Should error when passing no name for recipe."
-  (should (equal '(error "Invalid name for recipe: ‘nil’")
+  (should (equal '(user-error "Invalid name for recipe: ‘nil’")
 		 (should-error (org-shoplist-recipe-create nil)))))
 
 (ert-deftest org-shoplist-test/recipe-create-empty-string-name ()
   "Should error when passing no name for recipe."
-  (should (equal '(error "Invalid name for recipe: ‘’")
+  (should (equal '(user-error "Invalid name for recipe: ‘’")
 		 (should-error (org-shoplist-recipe-create "")))))
 
 
@@ -73,7 +73,7 @@
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (goto-char (point-min)) ;;move point that buffer don't get terminated
-     (should (equal '(error "Not at beginning of recipe")
+     (should (equal '(user-error "Not at beginning of recipe")
 		    (should-error (org-shoplist-recipe-read))))
      (should (= (point) (point-min))))))
 
@@ -83,7 +83,7 @@
    (lambda ()
      (insert "* ")
      (goto-char (point-min))
-     (should (equal '(error "Invalid name for recipe: ‘’")
+     (should (equal '(user-error "Invalid name for recipe: ‘’")
 		    (should-error (org-shoplist-recipe-read)))))))
 
 (ert-deftest org-shoplist-test/recipe-read-no-ings ()
@@ -226,10 +226,7 @@ Für die Sauce brauchen wir:
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
-(ert-deftest org-shoplist-test/recipe-read-aggregate ()
-  "Aggreage a recipe correctly.")
-
-(ert-deftest org-shoplist-test/recipe-read-one-ingredient-with-100-ing ()
+(ert-deftest org-shoplist-test/recipe-read-aggregate-100-same-ingredients ()
   "Read a recipe with 100 ing to see performance of regex."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
@@ -238,5 +235,20 @@ Für die Sauce brauchen wir:
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))
 		    (org-shoplist-recipe-read t))))))
+
+(ert-deftest org-shoplist-test/recipe-read-invalid-amount ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Rezept 1
+Die (200g. Nuts) mahlen.
+Nuts haben einen hohen Protain gehalt.
+Für die Sauce brauchen wir:
+- (200g Nuts)
+* Rezept 2
+- (200g Flour)")
+     (goto-char (point-min))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(200g.) for ingredient")
+		    (should-error (org-shoplist-recipe-read)))))))
 
 ;;; org-shoplist-recipe-test.el ends here
