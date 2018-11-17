@@ -230,7 +230,7 @@ Für die Sauce brauchen wir:
   "Read a recipe with 100 ing to see performance of regex."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert-file-contents "file/recipe-with-100-ing.org")
+     (insert-file-contents "./test/file/recipe-with-100-ing.org")
      (goto-char (point-min))
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))

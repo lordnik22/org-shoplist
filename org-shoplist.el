@@ -20,26 +20,13 @@
 (require 'calc-units)
 (require 'org)
 
+(defcustom org-shoplist-buffer-name "*Shopping List*"
+  "Name of buffer when generating a shopping list."
+  :type 'string
+  :group 'org-shoplist)
+
 (defcustom org-shoplist-keyword "TOBUY"
   "Keyword to mark recies for shopping."
-  :type 'string
-  :group 'org-shoplist)
-
-(defcustom org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
-  "Match a unit in a string."
-  :type 'string
-  :group 'org-shoplist)
-
-(defcustom org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t.]*\\)"
-  "Match an amount in a string."
-  :type 'string
-  :group 'org-shoplist)
-
-(defcustom org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t)(]+?\\)[ ]\\(.+?\\))"
-  "Match an ingredient.
-group 1: number
-group 2: unit
-group 3: ingredient-name"
   :type 'string
   :group 'org-shoplist)
 
@@ -48,6 +35,15 @@ group 3: ingredient-name"
 Beaware that the unit can't contain dots."
   :type '(repeat (symbol string string))
   :group 'org-shoplist)
+
+(defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
+  "Match a unit in a string.")
+
+(defconst org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t.]*\\)"
+  "Match an amount in a string.")
+
+(defconst org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t)(]+?\\)[ ]\\(.+?\\))"
+  "Match an ingredient.")
 
 ;; Inject custom units
 (when (not (eq nil org-shoplist-additional-units))

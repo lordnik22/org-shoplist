@@ -5,6 +5,7 @@
 (require 'org-shoplist)
 (require 'calc-units)
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
+(defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
 
 (defvar org-shoplist-test-keyword-b org-shoplist-keyword
   "Backup constant for resting the custom variable: ‘org-shoplist-test-keyword’.")

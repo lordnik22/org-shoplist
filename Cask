@@ -5,6 +5,7 @@
 
 (depends-on "org")
 (depends-on "calc")
+(depends-on "seq")
 
 (development
  (depends-on "cl")
