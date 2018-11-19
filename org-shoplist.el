@@ -19,6 +19,7 @@
 (require 'calc-ext)
 (require 'calc-units)
 (require 'org)
+(require 'calendar)
 
 (defcustom org-shoplist-buffer-name "*Shopping List*"
   "Name of buffer when generating a shopping list."
@@ -215,8 +216,11 @@ recipes."
 
 (defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
-‘RECIPES’ initial recipes in the shoplist."
-  (list (calendar-current-date) recipes))
+‘RECIPES’ recipes which should be in shoplist."
+  (if (or (eq recipes nil)
+	  (eq nil (car recipes)))
+      nil
+    (list (calendar-current-date) recipes)))
 
 (defun org-shoplist-shoplist-shopdate (shoplist)
   "Get shopdate of shoplist.
@@ -225,7 +229,7 @@ recipes."
 
 (defun org-shoplist-shoplist-recipes (shoplist)
   "Get recipes of shoplist.
-‘SHOPLIST’ a string or nil containing shopping day."
+‘SHOPLIST’ a."
   (if (eq nil (car (cdr shoplist)))
       nil
     (car (cdr shoplist))))
