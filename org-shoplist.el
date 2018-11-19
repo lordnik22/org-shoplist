@@ -222,7 +222,7 @@ recipes."
       nil
     (list (calendar-current-date) recipes)))
 
-(defun org-shoplist-shoplist-shopdate (shoplist)
+(defun org-shoplist-shoplist-creation-date (shoplist)
   "Get shopdate of shoplist.
 ‘SHOPLIST’ of which the date should be extracted."
   (car shoplist))
@@ -240,12 +240,14 @@ To read a recipe there must be at least a org-heading (name of the recipe).
 See ‘org-shoplist-recipe-create’ for more details on creating general recipes.
 ‘AGGREGATE’ ingredients when t."
   (let ((recipe-list nil))
-    (beginning-of-line 2)
     (while (and (not (= (point-max) (point)))
-		(search-forward-regexp org-heading-regexp nil t 1)
-		(progn (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword))))
-      (setq recipe-list (append recipe-list (org-shoplist-recipe-read))))
-    (org-shoplist-shoplist-create (calendar-current-date) recipe-list)))
+		(search-forward-regexp org-heading-regexp nil t 1))
+      (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
+	(beginning-of-line 1)
+	(if (eq nil recipe-list)
+	    (setq recipe-list (list (org-shoplist-recipe-read)))
+	  (push (org-shoplist-recipe-read) recipe-list))))
+    (apply 'org-shoplist-shoplist-create (reverse recipe-list))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

@@ -213,7 +213,24 @@ Für die Sauce brauchen wir:
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert "* Rezept 1
+     (insert "* TODO Rezept 1
+Die (200g Nuts) mahlen.
+Nuts haben einen hohen Protain gehalt.
+Für die Sauce brauchen wir:
+- (200g Nuts)
+* Rezept 2
+- (200g Flour)")
+     (goto-char (point-min))
+     (should (equal (list "Rezept 1"
+			  (list (org-shoplist-ing-create "200g" "Nuts")
+				(org-shoplist-ing-create "200g" "Nuts")))
+		    (org-shoplist-recipe-read))))))
+
+(ert-deftest org-shoplist-test/recipe-read-one-header-with-todo-keyword ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* TODO Rezept 1
 Die (200g Nuts) mahlen.
 Nuts haben einen hohen Protain gehalt.
 Für die Sauce brauchen wir:
