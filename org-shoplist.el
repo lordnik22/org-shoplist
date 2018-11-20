@@ -182,10 +182,16 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
   "Get all ingredients of ‘RECIPE’."
   (cdr recipe))
 
-(defun org-shoplist-recipe-get-N-ing (recipe n)
-  "Get from ‘RECIPE’ the ‘N’th ingredient.
-First = ‘n’ = 0"
-  (elt recipe n))
+(defun org-shoplist-recipe-aggregate (&rest recipes)
+  "Aggregate all ings in ‘RECIPES’ together with a mark from
+  which recipe the ings are comming."
+  ;; (list
+  ;;  (cons (list "Rezept 1" "Rezept2")  "zutat 2 200g")
+  ;;  (cons (list "Rezept 3" "Rezept 2")  "asdf"))
+  (if (or (eq nil (car recipes))
+	  (eq nil recipes))
+      nil
+    (list (cons (org-shoplist-recipe-get-all-ing (car recipes)) recipes))))
 
 (defun org-shoplist--recipe-read-all-ing (stars)
   "Assums that at beginning of recipe.
@@ -249,5 +255,8 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 	  (push (org-shoplist-recipe-read) recipe-list))))
     (apply 'org-shoplist-shoplist-create (reverse recipe-list))))
 
+(defun org-shoplist-shoplist-insert (shoplist)
+  "Insert ‘SHOPLIST’."
+  )
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

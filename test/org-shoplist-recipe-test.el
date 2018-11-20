@@ -268,4 +268,14 @@ Für die Sauce brauchen wir:
      (should (equal '(user-error "Invalid ‘AMOUNT’(200g.) for ingredient")
 		    (should-error (org-shoplist-recipe-read)))))))
 
+(ert-deftest org-shoplist-test/recipe-aggregate-nil ()
+  "From nothing come nothing."
+  (should (eq nil (org-shoplist-recipe-aggregate nil))))
+
+(ert-deftest org-shoplist-test/recipe-aggregate-one-recipe ()
+  "Unform one recipe."
+  (should (eq (list (cons (org-shoplist-ing-create "200g" "Apple")
+			  (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))
+	      (org-shoplist-recipe-aggregate (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple"))))))
+
 ;;; org-shoplist-recipe-test.el ends here
