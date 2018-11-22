@@ -124,7 +124,8 @@ Return new ingredient with modified amount."
 
 (defun org-shoplist-ing-aggregate (&rest ings)
   "Aggregate ‘INGS’."
-  (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x))) ings))
+  (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x)))
+				  ings))
 	(aggregate-ings (list)))
     (while (not (eq nil (car group-ings)))
       (setq aggregate-ings (cons (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (cdr (car group-ings)))
@@ -174,13 +175,53 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
   "Get name of ‘RECIPE’."
   (car recipe))
 
-(defun org-shoplist-recipe-first-ing (recipe)
-  "Get first ingredient of ‘RECIPE’."
-  (car (cdr recipe)))
-
 (defun org-shoplist-recipe-get-all-ing (recipe)
   "Get all ingredients of ‘RECIPE’."
-  (cdr recipe))
+  (car (cdr recipe)))
+
+ (seq-group-by (lambda (x)
+		  (let (ing-of-x (car (car (car x))))
+		    (list (org-shoplist-ing-name ing-of-x) (org-shoplist-ing-group ing-of-x))))
+		(mapcar (lambda (r)
+			  (mapcar (lambda (i) (cons i r)) (org-shoplist-recipe-get-all-ing r)))
+			(list (org-shoplist-recipe-create "Applepie"
+					      (org-shoplist-ing-create "200g" "Apple")
+					      (org-shoplist-ing-create "200ml" "Milk"))
+			      (org-shoplist-recipe-create "Nut Salat"
+					      (org-shoplist-ing-create "200g" "Nuts")
+					      (org-shoplist-ing-create "200ml" "Milk")))))
+
+
+(cl-map 'list (lambda (r)
+	  (cl-map 'list (lambda (i) (cons i r)) (org-shoplist-recipe-get-all-ing r)))
+	(list (org-shoplist-recipe-create "Applepie"
+			      (org-shoplist-ing-create "200g" "Apple")
+			      (org-shoplist-ing-create "200ml" "Milk"))
+	      (org-shoplist-recipe-create "Nut Salat"
+			      (org-shoplist-ing-create "200g" "Nuts")
+			      (org-shoplist-ing-create "200ml" "Milk"))))
+
+(-flatten-n 1 (mapcar (lambda (r)
+			(mapcar (lambda (i) (cons i r)) (org-shoplist-recipe-get-all-ing r)))
+		      (list (org-shoplist-recipe-create "Applepie"
+					    (org-shoplist-ing-create "200g" "Apple")
+					    (org-shoplist-ing-create "200ml" "Milk"))
+			    (org-shoplist-recipe-create "Nut Salat"
+					    (org-shoplist-ing-create "200g" "Nuts")
+					    (org-shoplist-ing-create "200ml" "Milk")))))
+(apply 'org-shoplist-ing-aggregate '((("Apple" "200 g" "g") "Applepie" (("Apple" "200 g" "g") ("Milk" "200 ml" "m^3")))
+			 (("Milk" "200 ml" "m^3") "Applepie" (("Apple" "200 g" "g") ("Milk" "200 ml" "m^3")))
+			 (("Nuts" "200 g" "g") "Nut Salat" (("Nuts" "200 g" "g") ("Milk" "200 ml" "m^3")))
+			 (("Milk" "200 ml" "m^3") "Nut Salat" (("Nuts" "200 g" "g") ("Milk" "200 ml" "m^3")))))
+
+(apply 'org-shoplist-ing-aggregate
+       '(((nil nil)
+	  ( (("Apple" "200 g" "g") "Applepie" (("Apple" "200 g" "g") ("Milk" "200 ml" "m^3")))
+	    (("Milk" "200 ml" "m^3") "Applepie" (("Apple" "200 g" "g") ("Milk" "200 ml" "m^3")))
+	    )
+	  ((("Nuts" "200 g" "g") "Nut Salat" (("Nuts" "200 g" "g") ("Milk" "200 ml" "m^3")))
+	   (("Milk" "200 ml" "m^3") "Nut Salat" (("Nuts" "200 g" "g") ("Milk" "200 ml" "m^3"))))
+	  )))
 
 (defun org-shoplist-recipe-aggregate (&rest recipes)
   "Aggregate all ings in ‘RECIPES’ together with a mark from
@@ -188,10 +229,16 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
   ;; (list
   ;;  (cons (list "Rezept 1" "Rezept2")  "zutat 2 200g")
   ;;  (cons (list "Rezept 3" "Rezept 2")  "asdf"))
+ 
+  
+  (org-shoplist-ing-name
+   (car (car (car (mapcar (lambda (r)
+				      (mapcar (lambda (i) (cons i r)) (org-shoplist-recipe-get-all-ing r)))
+				    (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple") (org-shoplist-ing-create "200ml" "Milk"))))))))
   (if (or (eq nil (car recipes))
 	  (eq nil recipes))
       nil
-    (list (cons (org-shoplist-recipe-get-all-ing (car recipes)) recipes))))
+    (list (cons (org-shoplist-recipe-get-all-ing (car recipes)) (car recipes)))))
 
 (defun org-shoplist--recipe-read-all-ing (stars)
   "Assums that at beginning of recipe.
