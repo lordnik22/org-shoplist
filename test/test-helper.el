@@ -4,6 +4,7 @@
 ;;; Code:
 (require 'org-shoplist)
 (require 'calc-units)
+
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
 
@@ -22,13 +23,18 @@
 (defvar org-shoplist-test-additional-units-b org-shoplist-additional-units
   "Backup constant for resting the custom variable: ‘org-shoplist-additional-units’.")
 
+(defvar org-shoplist-test-table-header-b org-shoplist-table-header
+  "Backup constant for resting the custom variable: ‘org-shoplist-table-header’.")
+
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."
   (setq org-shoplist-test-keyword-b org-shoplist-keyword)
   (setq org-shoplist-test-ing-unit-regex-b org-shoplist-ing-unit-regex)
   (setq org-shoplist-test-ing-amount-regex-b org-shoplist-ing-amount-regex)
   (setq org-shoplist-test-ing-regex-b org-shoplist-ing-regex)
-  (setq org-shoplist-test-additional-units-b org-shoplist-additional-units))
+  (setq org-shoplist-test-additional-units-b org-shoplist-additional-units)
+  (setq org-shoplist-test-table-header-b org-shoplist-table-header))
+
 (defun org-shoplist-test-reset-custom-var ()
   "Reset custom variables that might got editted by a test."
   (setq org-shoplist-keyword org-shoplist-test-keyword-b)
@@ -36,7 +42,8 @@
   (setq org-shoplist-ing-amount-regex org-shoplist-test-ing-amount-regex-b)
   (setq org-shoplist-ing-regex org-shoplist-test-ing-regex-b)
   (setq org-shoplist-additional-units org-shoplist-test-additional-units-b)
-  (setq math-additional-units org-shoplist-additional-units))
+  (setq math-additional-units org-shoplist-test-additional-units-b)
+  (setq org-shoplist-table-header org-shoplist-test-table-header-b))
 
 (defun org-shoplist-test-set-additioanl-units (units)
   "Add ‘UNITS’ as additional units for current test."

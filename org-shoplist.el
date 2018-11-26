@@ -31,6 +31,11 @@
   :type 'string
   :group 'org-shoplist)
 
+(defcustom org-shoplist-table-header (list "Ingredient" "Amount")
+  "This varaible defines the header of the standard ingredient header."
+  :type '(repeat string)
+  :group 'shoplist)
+
 (defcustom org-shoplist-additional-units nil
   "Additional units that are needed for recipes with special units.
 Beaware that the unit can't contain dots."
@@ -252,8 +257,9 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 
 (defun org-shoplist-shoplist-insert (shoplist)
   "Insert ‘SHOPLIST’ in current buffer."
-  (insert (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
-		     (org-shoplist-shoplist-ings shoplist) "|\n") "|"))
+  (insert "|" (mapconcat 'identity org-shoplist-table-header "|") "|" ?\n
+	  "|" (mapconcat (lambda (i) (concat (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
+			 (org-shoplist-shoplist-ings shoplist) "|\n") "|" ?\n))
 
 (defun org-shoplist ()
   "Generate a shoplist with recipes from current buffer."
