@@ -26,6 +26,9 @@
 (defvar org-shoplist-test-table-header-b org-shoplist-table-header
   "Backup constant for resting the custom variable: ‘org-shoplist-table-header’.")
 
+(defvar math-simplifying-units-b math-simplifying-units
+  "Backup constant for resting the custom variable: ‘math-simplifying-units’.")
+
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."
   (setq org-shoplist-test-keyword-b org-shoplist-keyword)
@@ -33,7 +36,8 @@
   (setq org-shoplist-test-ing-amount-regex-b org-shoplist-ing-amount-regex)
   (setq org-shoplist-test-ing-regex-b org-shoplist-ing-regex)
   (setq org-shoplist-test-additional-units-b org-shoplist-additional-units)
-  (setq org-shoplist-test-table-header-b org-shoplist-table-header))
+  (setq org-shoplist-test-table-header-b org-shoplist-table-header)
+  (setq math-simplifying-units-b math-simplifying-units))
 
 (defun org-shoplist-test-reset-custom-var ()
   "Reset custom variables that might got editted by a test."
@@ -43,14 +47,14 @@
   (setq org-shoplist-ing-regex org-shoplist-test-ing-regex-b)
   (setq org-shoplist-additional-units org-shoplist-test-additional-units-b)
   (setq math-additional-units org-shoplist-test-additional-units-b)
+  (setq math-simplifying-units math-simplifying-units-b)
   (setq org-shoplist-table-header org-shoplist-test-table-header-b))
 
 (defun org-shoplist-test-set-additioanl-units (units)
   "Add ‘UNITS’ as additional units for current test."
   (apply 'add-to-list 'org-shoplist-additional-units units)
   (apply 'add-to-list 'math-additional-units org-shoplist-additional-units)
-  (setq math-units-table nil)
-  (message "%s" math-additional-units))
+  (setq math-units-table nil))
 
 (defun org-shoplist-test-test-in-buffer (func-in-buffer)
   "Execute a test in temp-buffer and leave everthing in same state as before.
