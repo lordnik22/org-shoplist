@@ -71,10 +71,10 @@ When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
 (defun org-shoplist--ing-transform-when-valid (amount)
-  "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
+  "Transform ‘AMOUNT’ to a valid form when possible else return nil."
   (if (and (stringp amount)
 	   (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount))
-      (save-match-data (org-shoplist-calc-eval amount))
+      (save-match-data (ignore-errors (org-shoplist-calc-eval amount)))
     (when (eq amount nil) (setq amount "0"))
     (let ((math-backup math-simplifying-units))
       (unwind-protect
@@ -83,7 +83,7 @@ When ‘AMOUNT’ nil, return nil"
 		   (if (and (stringp c-eval-a)
 			    (string-match (concat "^" org-shoplist-ing-amount-regex "$") c-eval-a))
 		       c-eval-a
-		     (user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount))))
+		     nil)))
 	(setq math-simplifying-units math-backup)
 	nil))))
 
@@ -115,20 +115,23 @@ If one constraint gets disregarded throw error."
   (save-match-data
     (when (not (stringp name)) (user-error "Invalid ‘NAME’(%s) for ingredient" name))
     (let ((valid-amount (org-shoplist--ing-transform-when-valid amount)))
+      (when (eq nil valid-amount) (user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount))
       (list name
 	    valid-amount
 	    (org-shoplist--ing-find-unit-group valid-amount)))))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
-  (org-shoplist--ing-transform-when-valid
-   (mapconcat (lambda (x)
-		(cond ((stringp x) x)
-		      ((integerp x) (number-to-string x))
-		      ((eq nil x) "0")
-		      ((listp x) (org-shoplist-ing-amount x))
-		      (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
-	      amounts "+")))
+  (let ((valid-amount (org-shoplist--ing-transform-when-valid
+		       (mapconcat (lambda (x)
+				    (cond ((stringp x) x)
+					  ((integerp x) (number-to-string x))
+					  ((eq nil x) "0")
+					  ((listp x) (org-shoplist-ing-amount x))
+					  (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
+				  amounts "+"))))
+    (when (eq nil valid-amount) (user-error "Incompatible units in ‘AMOUNTS’(%s)" amounts))
+    valid-amount))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
@@ -287,6 +290,13 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
       (org-shoplist-shoplist-insert sl)
       (funcall 'org-mode)
       (org-table-align))))
+
+(defun org-shoplist-init ()
+  "Setting the todo-keywords for current file."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (when (not (looking-at-p "#\\+SEQ_TODO:")) (insert "#+SEQ_TODO: " org-shoplist-keyword "\n"))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

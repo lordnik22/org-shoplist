@@ -14,23 +14,31 @@
   (should (equal '(user-error "Invalid ‘NAME’(nil) for ingredient")
 		 (should-error (org-shoplist-ing-create "100g" nil)))))
 
-(ert-deftest org-shoplist-test/ing-create-0g-Nuts ()
-  (should (equal '("Nuts" "0" "1") (org-shoplist-ing-create "0g" "Nuts"))))
+(ert-deftest org-shoplist-test/ing-create-test-diff-valid-amount ()
+  (should (equal '("Nuts" "0" "1") (org-shoplist-ing-create "0g" "Nuts")))
+  (should (equal '("Nuts" "100 g" "g") (org-shoplist-ing-create "100g" "Nuts")))
+  (should (equal '("Nuts" "99999 g" "g") (org-shoplist-ing-create "99999g" "Nuts")))
+  (should (equal '("Milk" "9 tsp" "m^3") (org-shoplist-ing-create "9tsp" "Milk")))
+  (should (equal '("Nuts" "400 g" "g") (org-shoplist-ing-create "400g" "Nuts")))
+  (should (equal '("Nuts" "1ml" "m^3") (org-shoplist-ing-create "1.0 ml" "Nuts")))
+  (should (equal '("Nuts" "100 gal" "m^3") (org-shoplist-ing-create "100 gal" "Nuts")))
+  (should (equal '("Nuts" "2390 m^3" "m^3") (org-shoplist-ing-create "2390 m^3" "Nuts")))
+  (should (equal '("Nuts" "2.39 m^3" "m^3") (org-shoplist-ing-create "2390e-3 m^3" "Nuts")))
+  (should (equal '("Nuts" "0.0239 m^3" "m^3") (org-shoplist-ing-create "23.90e-3 m^3" "Nuts")))
+  (should (equal '("Nuts" "35" "1") (org-shoplist-ing-create "12+23" "Nuts")))
+  (should (equal '("Nuts" "24" "1") (org-shoplist-ing-create "12*2" "Nuts")))
+  (should (equal '("Nuts" "24 mg" "g") (org-shoplist-ing-create "12mg*2" "Nuts")))
+  (should (equal '("Nuts" "1pwerg" "1") (org-shoplist-ing-create "1pwerg" "Nuts"))))
 
-(ert-deftest org-shoplist-test/ing-create-100g-Nuts ()
-  (should (equal '("Nuts" "100 g" "g") (org-shoplist-ing-create "100g" "Nuts"))))
-
-(ert-deftest org-shoplist-test/ing-create-400g-Nuts ()
-  (should (equal '("Nuts" "400 g" "g") (org-shoplist-ing-create "400g" "Nuts"))))
-
-(ert-deftest org-shoplist-test/ing-create-99999g-Nuts ()
-  (should (equal '("Nuts" "99999 g" "g") (org-shoplist-ing-create "99999g" "Nuts"))))
-
-(ert-deftest org-shoplist-test/ing-create-9tsp-Milk ()
-  (should (equal '("Milk" "9 tsp" "m^3") (org-shoplist-ing-create "9tsp" "Milk"))))
-
-(ert-deftest org-shoplist-test/ing-create-100gal-Nuts ()
-  (should (equal '("Nuts" "100 gal" "m^3") (org-shoplist-ing-create "100 gal" "Nuts"))))
+(ert-deftest org-shoplist-test/ing-create-test-diff-wrong-amount ()
+  (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
+		 (should-error (org-shoplist-ing-create "df.df" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(-234) for ingredient")
+		 (should-error (org-shoplist-ing-create "-234" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(a>1234) for ingredient")
+		 (should-error (org-shoplist-ing-create "a>1234" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(..02 gal) for ingredient")
+		 (should-error (org-shoplist-ing-create "..02 gal" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-1-something ()
   (should (equal '("Nuts" "1ml" "m^3") (org-shoplist-ing-create "1ml" "Nuts"))))
@@ -273,9 +281,8 @@
 
 (ert-deftest org-shoplist-test/ing-+-999g-1ml ()
   "Trow error when trying to add grams with mililiters."
-  (let ((ing (org-shoplist-ing-create "999g" "Nuts")))
-    (should (equal '(user-error "Invalid ‘AMOUNT’(999 g+1ml) for ingredient")
-		   (should-error (org-shoplist-ing-+ ing "1ml"))))))
+  (should (equal '(user-error "Incompatible units in ‘AMOUNTS’(((Nuts 999 g g) 1ml))")
+		 (should-error (org-shoplist-ing-+ (org-shoplist-ing-create "999g" "Nuts") "1ml")))))
 
 (ert-deftest org-shoplist-test/ing-+-ing ()
   "Add the amount of two ings togehter."
