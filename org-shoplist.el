@@ -284,7 +284,8 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 (defun org-shoplist ()
   "Generate a shoplist with recipes from current buffer."
   (interactive)
-  (let ((sl (with-current-buffer (current-buffer) (org-shoplist-shoplist-read))))
+  (let ((sl (with-current-buffer (current-buffer)
+	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read)))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert sl)
@@ -296,7 +297,17 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (when (not (looking-at-p "#\\+SEQ_TODO:")) (insert "#+SEQ_TODO: " org-shoplist-keyword "\n"))))
+    (when (not (looking-at-p "#\\+SEQ_TODO:")) (insert "#+SEQ_TODO: " org-shoplist-keyword "| BOUGHT" "\n"))
+    (funcall 'org-mode)))
+
+(defun org-shoplist-unmark-all ()
+  "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
+  (interactive)
+  (save-excursion
+    (goto-char (point-min))
+    (beginning-of-line 2)
+    (while (re-search-forward (concat " " org-shoplist-keyword) nil t)
+      (replace-match "" nil nil))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
