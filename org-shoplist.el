@@ -45,7 +45,7 @@ Beaware that the unit can't contain dots."
 (defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string.")
 
-(defconst org-shoplist-ing-amount-regex "\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t.]*\\)"
+(defconst org-shoplist-ing-amount-regex "\\([0-9]*\\(\\.\\|e-\\)?[0-9]*\\(\\.\\|e-\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .]*\\)\\)"
   "Match an amount in a string.")
 
 (defconst org-shoplist-ing-regex "(\\([1-9]?[0-9e\\.]*\\(\\.\\|-?\\)[0-9]*\\)[ ]?\\([^-+\n\t)(]+?\\)[ ]\\(.+?\\))"
@@ -55,6 +55,38 @@ Beaware that the unit can't contain dots."
 (when (not (eq nil org-shoplist-additional-units))
   (eval-after-load "calc-units" '(progn (apply 'add-to-list 'math-additional-units org-shoplist-additional-units))))
 
+(defun org-shoplist-calc-eval (str &optional separator &rest args)
+  "Pass ‘STR’, ‘SEPARATOR’ and ‘ARGS’ to (calc-eval) than check if it is valid."
+  (when (eq nil str) (setq str "0"))
+  (let* ((c-eval-str (calc-eval str separator args))
+	 (f-char (substring c-eval-str 0 1)))
+    (if (or (string= "0" f-char)
+	    (< 0 (string-to-number f-char)))
+	c-eval-str
+      (concat "1" c-eval-str))))
+
+(defun org-shoplist--ing-find-unit-group (amount)
+  "Find the ground unit of ‘AMOUNT’s unit.
+When ‘AMOUNT’ nil, return nil"
+  (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
+
+(defun org-shoplist--ing-transform-when-valid (amount)
+  "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
+  (if (and (stringp amount)
+	   (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount))
+      (save-match-data (org-shoplist-calc-eval amount))
+    (when (eq amount nil) (setq amount "0"))
+    (let ((math-backup math-simplifying-units))
+      (unwind-protect
+	  (progn (setq math-simplifying-units t)
+		 (let ((c-eval-a (save-match-data (ignore-errors (org-shoplist-calc-eval amount)))))
+		   (if (and (stringp c-eval-a)
+			    (string-match (concat "^" org-shoplist-ing-amount-regex "$") c-eval-a))
+		       c-eval-a
+		     (user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount))))
+	(setq math-simplifying-units math-backup)
+	nil))))
+
 (defun org-shoplist-ing-name (ing)
   "Get name of ‘ING’."
   (car ing))
@@ -63,16 +95,6 @@ Beaware that the unit can't contain dots."
   "Get amount of ‘ING’."
   (car (cdr ing)))
 
-(defun org-shoplist--ing-validate-amount (amount)
-  "Return ‘AMOUNT’ when it’s valid else throw error."
-  (when (eq amount nil) (setq amount "0"))
-  (when (numberp amount) (setq amount (number-to-string amount)))
-  (if (and (stringp amount)
-	   (string-match (concat "^" org-shoplist-ing-amount-regex "$") amount)
-	   (or (string= "" (match-string 1 amount))
-	       (< 0 (string-to-number (match-string 1 amount)))))
-      (save-match-data (calc-eval amount))
-    (user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount)))
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of ‘ING’."
@@ -85,11 +107,6 @@ Beaware that the unit can't contain dots."
   "Get group of ‘ING’."
   (car (cdr (cdr ing))))
 
-(defun org-shoplist--ing-find-unit-group (amount)
-  "Find the ground unit of ‘AMOUNT’s unit.
-When ‘AMOUNT’ nil, return nil"
-  (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
-
 (defun org-shoplist-ing-create (amount name)
   "Create an ingredient.
 ‘AMOUNT’ can be a string, a number or a valid sequence.
@@ -97,34 +114,28 @@ When ‘AMOUNT’ nil, return nil"
 If one constraint gets disregarded throw error."
   (save-match-data
     (when (not (stringp name)) (user-error "Invalid ‘NAME’(%s) for ingredient" name))
-    (let ((valid-amount (org-shoplist--ing-validate-amount amount)))
+    (let ((valid-amount (org-shoplist--ing-transform-when-valid amount)))
       (list name
 	    valid-amount
 	    (org-shoplist--ing-find-unit-group valid-amount)))))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
-  (org-shoplist--ing-validate-amount
-   (calc-eval
-    (math-to-standard-units
-     (math-read-expr
-      (mapconcat (lambda (x)
-		   (cond ((stringp x) x)
-			 ((integerp x) (number-to-string x))
-			 ((eq nil x) "0")
-			 ((listp x) (org-shoplist-ing-amount x))
-			 (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
-		 amounts "+"))
-     nil))))
+  (org-shoplist--ing-transform-when-valid
+   (mapconcat (lambda (x)
+		(cond ((stringp x) x)
+		      ((integerp x) (number-to-string x))
+		      ((eq nil x) "0")
+		      ((listp x) (org-shoplist-ing-amount x))
+		      (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
+	      amounts "+")))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
 Return new ingredient with modified amount."
   (if (= factor 0) nil
     (org-shoplist-ing-create
-     (calc-eval (math-to-standard-units
-		 (math-read-expr (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing)))
-		 nil))
+     (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing))
      (org-shoplist-ing-name ing))))
 
 (defun org-shoplist-ing-aggregate (&rest ings)
@@ -158,10 +169,10 @@ Whenn ‘STR’ is nil read line where point is at."
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
-       (let ((new-ing (org-shoplist-ing-create (concat (match-string 1 str) (match-string 3 str)) (match-string 4 str))))
-	 (if (eq ings nil)
-	     (list new-ing)
-	   (push new-ing ings))))
+       (cons (org-shoplist-ing-create
+	      (concat (match-string 1 str) (match-string 3 str))
+	      (match-string 4 str))
+	      ings))
     ings))
 
 (defun org-shoplist-recipe-create (name &rest ings)
@@ -240,32 +251,42 @@ recipes."
       nil
     (car (cdr (cdr shoplist)))))
 
-(defun org-shoplist-shoplist-read (&optional aggregate)
-  "Return a shoplist structure or throw error.
-To read a recipe there must be at least a org-heading (name of the recipe).
-See ‘org-shoplist-recipe-create’ for more details on creating general recipes.
-‘AGGREGATE’ ingredients when non-nil."
+(defun org-shoplist--shoplist-read-all-recipes (&optional aggregate)
+  "Read all recipes in buffer.
+‘AGGREGATE’ when t"
   (let ((recipe-list nil))
     (while (and (not (= (point-max) (point)))
 		(search-forward-regexp org-heading-regexp nil t 1))
       (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
 	(beginning-of-line 1)
-	(if (eq nil recipe-list)
-	    (setq recipe-list (list (org-shoplist-recipe-read aggregate)))
-	  (push (org-shoplist-recipe-read) recipe-list))))
+	 (if (eq recipe-list nil)
+	     (setq recipe-list (list (org-shoplist-recipe-read aggregate)))
+	   (push (org-shoplist-recipe-read aggregate) recipe-list))))
+    recipe-list))
+
+(defun org-shoplist-shoplist-read (&optional aggregate)
+  "Return a shoplist structure or throw error.
+To read a recipe there must be at least a org-heading (name of the recipe).
+See ‘org-shoplist-recipe-create’ for more details on creating general recipes.
+‘AGGREGATE’ ingredients when non-nil."
+  (let ((recipe-list (save-match-data (org-shoplist--shoplist-read-all-recipes aggregate))))
     (apply 'org-shoplist-shoplist-create (reverse recipe-list))))
 
 (defun org-shoplist-shoplist-insert (shoplist)
   "Insert ‘SHOPLIST’ in current buffer."
   (insert "|" (mapconcat 'identity org-shoplist-table-header "|") "|" ?\n
-	  "|" (mapconcat (lambda (i) (concat (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
-			 (org-shoplist-shoplist-ings shoplist) "|\n") "|" ?\n))
+	  (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
+		     (org-shoplist-shoplist-ings shoplist) "|\n") "|" ?\n))
 
 (defun org-shoplist ()
   "Generate a shoplist with recipes from current buffer."
   (interactive)
   (let ((sl (with-current-buffer (current-buffer) (org-shoplist-shoplist-read))))
-    (with-current-buffer (switch-to-buffer org-shoplist-buffer-name) (org-shoplist-shoplist-insert sl))))
+    (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
+      (when (>= (buffer-size) 0) (erase-buffer))
+      (org-shoplist-shoplist-insert sl)
+      (funcall 'org-mode)
+      (org-table-align))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

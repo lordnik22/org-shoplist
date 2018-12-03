@@ -52,7 +52,7 @@
   (should (equal (list (calendar-current-date)
 		       (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200ml" "Milk"))
 			     (org-shoplist-recipe-create "Nut Salat" (org-shoplist-ing-create "200ml" "Milk")))
-		       (list (org-shoplist-ing-create "4e-4 m^3" "Milk")))
+		       (list (org-shoplist-ing-create "400 ml" "Milk")))
 		 (org-shoplist-shoplist-create
 		  (org-shoplist-recipe-create "Applepie"
 				  (org-shoplist-ing-create "200ml" "Milk"))
@@ -108,7 +108,7 @@
 
 (ert-deftest org-shoplist-test/shoplist-ings-shoplist-with-two-recipe-and-diff-ing ()
   "From nothing comes nothing"
-  (should (equal (list (org-shoplist-ing-create "2e-4 m^3" "Cream") (org-shoplist-ing-create "200g" "Apple"))
+  (should (equal (list (org-shoplist-ing-create "200ml" "Cream") (org-shoplist-ing-create "200g" "Apple"))
 		 (org-shoplist-shoplist-ings
 		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200ml" "Cream"))
 				    (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
@@ -124,6 +124,21 @@
 (ert-deftest org-shoplist-test/shoplist-read-nil ()
   "From nothing comes nothing"
   (should (equal nil (org-shoplist-shoplist-read nil))))
+
+(ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe-casky? ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* TOBUY Rezept 1
+- (200g Nuts)")
+     (goto-char (point-min))
+     (should (equal '((11 30 2018)
+		      (("Rezept 1" (("Nuts" "200 g" "g"))))
+		      (("Nuts" "200 g" "g")))
+		    '((11 30 2018)
+		      ((#("Rezept 1" 0 8 (fontified t face org-level-1))
+			((#("Nuts" 0 4 (fontified t)) "200 g" "g"))))
+		      ((#("Nuts" 0 4 (fontified t)) "200 g" "g"))))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe ()
   "Read the recipe which is marked."
@@ -170,7 +185,7 @@ Für die Sauce brauchen wir:
 						      (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read))))))
 
-(ert-deftest org-shoplist-test/shpoplist-read-two-marked-recipes ()
+(ert-deftest org-shoplist-test/shoplist-read-two-marked-recipes ()
   "Read the marked recipes."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
@@ -252,5 +267,5 @@ Für die Sauce brauchen wir:
      (goto-char (point-min))
      (org-shoplist-shoplist-insert (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400ml" "Milk"))))
      (should (string= (buffer-string)
-		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Milk|400 ml|"))))))
+		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Milk|400 ml|\n"))))))
 ;;; org-shoplist-test.el ends here
