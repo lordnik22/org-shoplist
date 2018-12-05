@@ -8,47 +8,27 @@
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
 
-(defvar org-shoplist-test-keyword-b org-shoplist-keyword
-  "Backup constant for resting the custom variable: ‘org-shoplist-test-keyword’.")
-
-(defvar org-shoplist-test-ing-unit-regex-b org-shoplist-ing-unit-regex
-  "Backup constant for resting the custom variable: ‘org-shoplist-ing-unit-regex’.")
-
-(defvar org-shoplist-test-ing-amount-regex-b org-shoplist-ing-amount-regex
-  "Backup constant for resting the custom variable: ‘org-shoplist-ing-amount-regex’.")
-
-(defvar org-shoplist-test-ing-regex-b org-shoplist-ing-regex
-  "Backup constant for resting the custom variable: ‘org-shoplist-ing-regex’.")
-
-(defvar org-shoplist-test-additional-units-b org-shoplist-additional-units
-  "Backup constant for resting the custom variable: ‘org-shoplist-additional-units’.")
-
-(defvar org-shoplist-test-table-header-b org-shoplist-table-header
-  "Backup constant for resting the custom variable: ‘org-shoplist-table-header’.")
-
-(defvar math-simplifying-units-b math-simplifying-units
-  "Backup constant for resting the custom variable: ‘math-simplifying-units’.")
+(defvar org-shoplist-test-backup-vars
+  (list (cons org-shoplist-keyword 'org-shoplist-keyword)
+	(cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
+	(cons org-shoplist-ing-amount-regex 'org-shoplist-ing-amount-regex)
+	(cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
+	(cons org-shoplist-additional-units 'org-shoplist-additional-units)
+	(cons org-shoplist-table-header 'org-shoplist-table-header)
+	(cons org-shoplist-explict-keyword 'org-shoplist-explict-keyword)
+	(cons math-simplifying-units 'math-simplifying-units)))
 
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."
-  (setq org-shoplist-test-keyword-b org-shoplist-keyword)
-  (setq org-shoplist-test-ing-unit-regex-b org-shoplist-ing-unit-regex)
-  (setq org-shoplist-test-ing-amount-regex-b org-shoplist-ing-amount-regex)
-  (setq org-shoplist-test-ing-regex-b org-shoplist-ing-regex)
-  (setq org-shoplist-test-additional-units-b org-shoplist-additional-units)
-  (setq org-shoplist-test-table-header-b org-shoplist-table-header)
-  (setq math-simplifying-units-b math-simplifying-units))
+  (let ((loaded-vars (list)))
+    (dolist (i org-shoplist-test-backup-vars loaded-vars)
+      (setq loaded-vars (append loaded-vars (list (cons (eval (cdr i)) (cdr i))))))
+    (setq org-shoplist-test-backup-vars loaded-vars)))
 
 (defun org-shoplist-test-reset-custom-var ()
   "Reset custom variables that might got editted by a test."
-  (setq org-shoplist-keyword org-shoplist-test-keyword-b)
-  (setq org-shoplist-ing-unit-regex org-shoplist-test-ing-unit-regex-b)
-  (setq org-shoplist-ing-amount-regex org-shoplist-test-ing-amount-regex-b)
-  (setq org-shoplist-ing-regex org-shoplist-test-ing-regex-b)
-  (setq org-shoplist-additional-units org-shoplist-test-additional-units-b)
-  (setq math-additional-units org-shoplist-test-additional-units-b)
-  (setq math-simplifying-units math-simplifying-units-b)
-  (setq org-shoplist-table-header org-shoplist-test-table-header-b))
+  (dolist (i org-shoplist-test-backup-vars)
+    (set (cdr i) (car i))))
 
 (defun org-shoplist-test-set-additioanl-units (units)
   "Add ‘UNITS’ as additional units for current test."
