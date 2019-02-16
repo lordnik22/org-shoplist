@@ -14,8 +14,9 @@
 	(cons org-shoplist-ing-amount-regex 'org-shoplist-ing-amount-regex)
 	(cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
 	(cons org-shoplist-additional-units 'org-shoplist-additional-units)
+	(cons math-additional-units 'math-additional-units)
 	(cons org-shoplist-table-header 'org-shoplist-table-header)
-	(cons org-shoplist-explict-keyword 'org-shoplist-explict-keyword)
+	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
 	(cons math-simplifying-units 'math-simplifying-units)))
 
 (defun org-shoplist-test-load-custom-var ()
@@ -32,8 +33,10 @@
 
 (defun org-shoplist-test-set-additioanl-units (units)
   "Add ‘UNITS’ as additional units for current test."
-  (apply 'add-to-list 'org-shoplist-additional-units units)
-  (apply 'add-to-list 'math-additional-units org-shoplist-additional-units)
+  (dolist (i units)
+    (add-to-list 'org-shoplist-additional-units i))
+  (dolist (i org-shoplist-additional-units)
+    (add-to-list 'math-additional-units i))
   (setq math-units-table nil))
 
 (defun org-shoplist-test-test-in-buffer (func-in-buffer)

@@ -7,9 +7,8 @@
   (should (= 1 1)))
 
 (ert-deftest org-shoplist-test/recipe-create-nil ()
-  "Should error when passing no name for recipe."
-  (should (equal '(user-error "Invalid name for recipe: ‘nil’")
-		 (should-error (org-shoplist-recipe-create nil)))))
+  "From nothing comes nothing."
+  (should (eq nil (org-shoplist-recipe-create nil))))
 
 (ert-deftest org-shoplist-test/recipe-create-empty-string-name ()
   "Should error when passing no name for recipe."
@@ -98,6 +97,7 @@
   "Read all ingredients of recipe."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-explicit-keyword nil)
      (insert "* Test
 - (200g Nuts) mahlen")
      (goto-char (point-min))
@@ -213,24 +213,7 @@ Für die Sauce brauchen wir:
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert "* TODO Rezept 1
-Die (200g Nuts) mahlen.
-Nuts haben einen hohen Protain gehalt.
-Für die Sauce brauchen wir:
-- (200g Nuts)
-* Rezept 2
-- (200g Flour)")
-     (goto-char (point-min))
-     (should (equal (list "Rezept 1"
-			  (list (org-shoplist-ing-create "200g" "Nuts")
-				(org-shoplist-ing-create "200g" "Nuts")))
-		    (org-shoplist-recipe-read))))))
-
-(ert-deftest org-shoplist-test/recipe-read-one-header-with-todo-keyword ()
-  "Read the recipe which is marked."
-  (org-shoplist-test-test-in-org-buffer
-   (lambda ()
-     (insert "* TODO Rezept 1
+     (insert "* Rezept 1
 Die (200g Nuts) mahlen.
 Nuts haben einen hohen Protain gehalt.
 Für die Sauce brauchen wir:
@@ -247,7 +230,8 @@ Für die Sauce brauchen wir:
   "Read a recipe with 100 ing to see performance of regex."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert-file-contents "./test/file/recipe-with-100-ing.org")
+     (setq org-shoplist-explicit-keyword nil)
+     (insert-file-contents "./file/recipe-with-100-ing.org")
      (goto-char (point-min))
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))
@@ -258,14 +242,195 @@ Für die Sauce brauchen wir:
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (insert "* Rezept 1
-Die (200g. Nuts) mahlen.
+Die (200mg. Milk) mahlen.
 Nuts haben einen hohen Protain gehalt.
 Für die Sauce brauchen wir:
 - (200g Nuts)
 * Rezept 2
 - (200g Flour)")
      (goto-char (point-min))
-     (should (equal '(user-error "Invalid ‘AMOUNT’(200g.) for ingredient")
+     (should (equal '(user-error "Invalid ‘AMOUNT’(200mg.) for ingredient")
 		    (should-error (org-shoplist-recipe-read)))))))
+
+(ert-deftest org-shoplist-test/recipe-*-nil-nil ()
+  "From nothing comes nothing."
+  (should (eq nil (org-shoplist-recipe-* nil nil))))
+
+(ert-deftest org-shoplist-test/recipe-*-recipe-factor-nil ()
+  "Return the same recipe when factor is nil."
+  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts")) nil))))
+
+(ert-deftest org-shoplist-test/recipe-*-recipe-nil-factor-2 ()
+  "From nothing comes nothing."
+  (should (eq nil (org-shoplist-recipe-* nil 2))))
+
+(ert-deftest org-shoplist-test/recipe-*-2-200g ()
+  "Multiply all ingredients of recipe by given factor. "
+  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "200g" "Nuts")) 2))))
+
+(ert-deftest org-shoplist-test/recipe-*-2/3-200g ()
+  "Multiply all ingredients of recipe by given factor. "
+  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "133.g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "200g" "Nuts")) (/ 2.0 3)))))
+
+(ert-deftest org-shoplist-test/recipe-*-2/3-200g ()
+  "Multiply all ingredients of recipe by given factor. "
+  (should (equal (org-shoplist-recipe-create "Test"
+			  (org-shoplist-ing-create "200g" "Nuts")
+			  (org-shoplist-ing-create "400ml" "Milk"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test"
+			      (org-shoplist-ing-create "100g" "Nuts")
+			      (org-shoplist-ing-create "200ml" "Milk"))
+		     2))))
+
+(ert-deftest org-shoplist-test/recipe-explict-keyword ()
+  "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* " org-shoplist-keyword " Rezept 2
+- (200g Nuts)
+** More ingredients
+- (200g Nuts)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "200g" "Nuts"))
+		    (org-shoplist-recipe-read nil t))))))
+
+(ert-deftest org-shoplist-test/recipe-explict-keyword-read-one-marked-subheading ()
+  "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-explicit-keyword t)
+     (insert "* " org-shoplist-keyword " Rezept 2
+- (200g Nuts)
+** " org-shoplist-keyword " More ingredients
+- (200g Nuts)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-recipe-create "Rezept 2"
+			     (org-shoplist-ing-create "200g" "Nuts")
+			     (org-shoplist-ing-create "200g" "Nuts"))
+		    (org-shoplist-recipe-read))))))
+
+(ert-deftest org-shoplist-test/recipe-explict-keyword-read-two-marked-subheading-after-unmarked ()
+  "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* " org-shoplist-keyword " Rezept 2
+- (200g Nuts)
+** Other ingredients 1
+- (200g Floor)
+** " org-shoplist-keyword " More ingredients
+- (200g Salt)
+** " org-shoplist-keyword " Other ingredients 2
+- (200g Apple)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-recipe-create "Rezept 2"
+			     (org-shoplist-ing-create "200g" "Nuts")
+			     (org-shoplist-ing-create "200g" "Salt")
+			     (org-shoplist-ing-create "200g" "Apple"))
+		    (org-shoplist-recipe-read nil t))))))
+
+(ert-deftest org-shoplist-test/recipe-explict-keyword-read-marked-subheading-inbetween-two-unmarked ()
+  "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* " org-shoplist-keyword " Rezept 2
+- (200g Nuts)
+** Other ingredients 1
+- (200g Floor)
+** " org-shoplist-keyword " More ingredients
+- (200g Salt)
+** Other ingredients 2
+- (200g Apple)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-recipe-create "Rezept 2"
+			     (org-shoplist-ing-create "200g" "Nuts")
+			     (org-shoplist-ing-create "200g" "Salt"))
+		    (org-shoplist-recipe-read nil t))))))
+
+
+(ert-deftest org-shoplist-test/factor-up-ones-buffer-empty ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (should (equal '(user-error "Not in recipe")
+		    (should-error (org-shoplist-recipe-factor-up)))))))
+
+(ert-deftest org-shoplist-test/factor-up-ones-header-no-property ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header")
+     (goto-char (point-min))
+     (should (equal (list 'user-error
+			  (format "No inital value for %s defined"
+				  org-shoplist-factor-property-name))
+		    (should-error (org-shoplist-recipe-factor-up)))))))
+
+(ert-deftest org-shoplist-test/factor-up-ones-header-no-ingredients ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:")
+     (goto-char (point-min))
+     (should (equal '(user-error "No ingredients to apply factor")
+		    (should-error (org-shoplist-recipe-factor-up)))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-one-ingredient ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (200g Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (400.g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-2-3-one-header-one-ingredient ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   3
+  :END:
+- (300.g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-two-ingredient ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (200g Nuts)
+- (100ml Milk)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (400.g Nuts)
+- (200.ml Milk)")))
+     (should (= (point) (point-min))))))
 
 ;;; org-shoplist-recipe-test.el ends here
