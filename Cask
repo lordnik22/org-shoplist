@@ -4,6 +4,7 @@
 (package-file "org-shoplist.el")
 
 (depends-on "seq")
+(depends-on "cl")
 (depends-on "calc")
 (depends-on "org")
 (depends-on "calendar")

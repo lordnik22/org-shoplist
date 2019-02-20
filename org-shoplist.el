@@ -20,6 +20,7 @@
 (require 'calc-units)
 (require 'org)
 (require 'calendar)
+(require 'cl)
 
 (defcustom org-shoplist-buffer-name "*Shopping List*"
   "Name of buffer when generating a shopping list."
@@ -365,8 +366,8 @@ When there is no value, set value as inital value."
 			  current-recipe
 			  (ignore-errors (/ (float new-factor) old-factor)))))
 	(when (eq nil new-recipe) (user-error "No ingredients to apply factor"))
-	;; replace current with new
-	(save-excursion
+
+	(save-excursion ;; replace current with new
 	  (map
 	   nil
 	   (lambda (new old)
