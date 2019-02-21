@@ -288,8 +288,8 @@ Für die Sauce brauchen wir:
 (ert-deftest org-shoplist-test/recipe-explict-keyword ()
   "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
   (org-shoplist-test-test-in-org-buffer
-   (setq org-shoplist-explicit-keyword nil)
    (lambda ()
+     (setq org-shoplist-explicit-keyword t)
      (insert "* " org-shoplist-keyword " Rezept 2
 - (200g Nuts)
 ** More ingredients
@@ -317,6 +317,7 @@ Für die Sauce brauchen wir:
   "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-explicit-keyword nil)
      (insert "* " org-shoplist-keyword " Rezept 2
 - (200g Nuts)
 ** Other ingredients 1
@@ -336,6 +337,7 @@ Für die Sauce brauchen wir:
   "Only read the explict marked org-headings when org-shoplist-explicit-keyword it t."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-explicit-keyword nil)
      (insert "* " org-shoplist-keyword " Rezept 2
 - (200g Nuts)
 ** Other ingredients 1
