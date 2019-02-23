@@ -38,13 +38,13 @@ Beaware when using relative units like cups that all cups get aggregated togethe
 
 ## Recipes ##
 Example:
-`
+```
 * TOBUY Älpämagerone
 - (250ml Rahm)
 - (1 Zwiebel)
 - (250g Magrone)
 - (250g Emmentalerkäse)
-`
+```
 ### Explicty ###
 ## Aggregation ##
 ## Customization ##
