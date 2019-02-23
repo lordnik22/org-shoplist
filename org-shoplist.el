@@ -329,8 +329,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 	  (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
 		     (org-shoplist-shoplist-ings shoplist)
 		     "|\n")
-	  "|\n")
-  (org-table-align))
+	  "|\n"))
 
 (defun org-shoplist-shoplist-as-todo-list (shoplist)
   "Format ‘SHOPLIST’ as todo-list."
@@ -344,7 +343,8 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   "Insert a shoplist with given format(‘AS-FORMAT’)."
   (save-excursion
     (funcall 'org-mode)
-    (insert as-format)))
+    (insert as-format)
+    (when (org-at-table-p) (org-table-align))))
 
 (defun org-shoplist (formatter)
   "Generate a shoplist from current buffer with ‘FORMATTER’."
