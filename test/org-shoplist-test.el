@@ -146,7 +146,6 @@
    (lambda ()
      (insert "* " org-shoplist-keyword " Rezept 1" "
 Die (200g Nuts) mahlen.
-Nuts haben einen hohen Protain gehalt.
 Für die Sauce brauchen wir:
 - (200g Nuts)")
      (goto-char (point-min))
@@ -256,7 +255,7 @@ Für die Sauce brauchen wir:
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (goto-char (point-min))
-     (org-shoplist-shoplist-insert (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400g" "Nuts"))))
+     (org-shoplist-shoplist-insert (funcall org-shoplist-default-format (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400g" "Nuts")))))
      (should (string= (buffer-string)
 		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Nuts|400g|\n"))))))
 
@@ -265,7 +264,7 @@ Für die Sauce brauchen wir:
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (goto-char (point-min))
-     (org-shoplist-shoplist-insert (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400ml" "Milk"))))
+     (org-shoplist-shoplist-insert (funcall org-shoplist-default-format (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400ml" "Milk")))))
      (should (string= (buffer-string)
 		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Milk|400ml|\n"))))))
 

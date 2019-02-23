@@ -67,6 +67,11 @@ included in the shoplist."
   :type 'string
   :group 'org-shoplist)
 
+(defcustom org-shoplist-default-format 'org-shoplist-shoplist-as-table
+  "Function name with one parameter which formats the shoplist."
+  :type 'symbol
+  :group 'org-shoplist)
+
 (defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string.")
 
@@ -317,29 +322,46 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 	     recipe-list))))
     (apply 'org-shoplist-shoplist-create (reverse recipe-list))))
 
-(defun org-shoplist-shoplist-insert (shoplist)
-  "Insert ‘SHOPLIST’ in current buffer."
-  (insert "|" (mapconcat 'identity org-shoplist-table-header "|") "|" ?\n
+(defun org-shoplist-shoplist-as-table (shoplist)
+  "Format ‘SHOPLIST’ as table."
+  (concat "|" (mapconcat 'identity org-shoplist-table-header "|")
+	  "|\n"
 	  (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
-		     (org-shoplist-shoplist-ings shoplist) "|\n") "|" ?\n))
+		     (org-shoplist-shoplist-ings shoplist)
+		     "|\n")
+	  "|\n")
+  (org-table-align))
 
-(defun org-shoplist ()
-  "Generate a shoplist with recipes from current buffer."
-  (interactive)
+(defun org-shoplist-shoplist-as-todo-list (shoplist)
+  "Format ‘SHOPLIST’ as todo-list."
+  (concat
+   (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
+   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" org-shoplist-ing-start-char (org-shoplist-ing-amount i) "\s" (org-shoplist-ing-name i) org-shoplist-ing-end-char))
+	      (org-shoplist-shoplist-ings shoplist)
+	      "\n")))
+
+(defun org-shoplist-shoplist-insert (as-format)
+  "Insert a shoplist with given format(‘AS-FORMAT’)."
+  (save-excursion
+    (funcall 'org-mode)
+    (insert as-format)))
+
+(defun org-shoplist (formatter)
+  "Generate a shoplist from current buffer with ‘FORMATTER’."
+  (interactive "aFormatter-Name: ")
   (let ((sl (with-current-buffer (current-buffer)
 	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read t org-shoplist-explicit-keyword)))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
-      (org-shoplist-shoplist-insert sl)
-      (funcall 'org-mode)
-      (org-table-align))))
+      (when (eq formatter nil) (setq formatter org-shoplist-default-format))
+      (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
 (defun org-shoplist-init ()
   "Setting the todo-keywords for current file."
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (when (not (looking-at-p "#\\+SEQ_TODO:")) (insert "#+SEQ_TODO: " org-shoplist-keyword "| BOUGHT" "\n"))
+    (when (not (looking-at-p "#\\+SEQ_TODO:")) )
     (funcall 'org-mode)))
 
 (defun org-shoplist-unmark-all ()

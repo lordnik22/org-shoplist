@@ -17,6 +17,7 @@
 	(cons math-additional-units 'math-additional-units)
 	(cons org-shoplist-table-header 'org-shoplist-table-header)
 	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
+	(cons org-shoplist-default-format 'org-shoplist-default-format)
 	(cons math-simplifying-units 'math-simplifying-units)))
 
 (defun org-shoplist-test-load-custom-var ()
