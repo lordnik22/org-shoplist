@@ -353,7 +353,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read t org-shoplist-explicit-keyword)))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
-      (when (eq formatter nil) (setq formatter org-shoplist-default-format))
+      (when (eq formatter '##) (setq formatter org-shoplist-default-format))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
 (defun org-shoplist-init ()
