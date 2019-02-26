@@ -57,6 +57,12 @@ included in the shoplist."
   :type 'boolean
   :group 'org-shoplist)
 
+(defcustom org-shoplist-aggregate t
+  "When non-nil will aggregate the ingredient of the generated shoplist.
+When nil won’t aggregate."
+  :type 'boolean
+  :group 'org-shoplist)
+
 (defcustom org-shoplist-ing-start-char "("
   "Start char which introduces a ingredient."
   :type 'string
@@ -350,7 +356,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   "Generate a shoplist from current buffer with ‘FORMATTER’."
   (interactive "aFormatter-Name: ")
   (let ((sl (with-current-buffer (current-buffer)
-	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read t org-shoplist-explicit-keyword)))))
+	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword)))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (when (eq formatter '##) (setq formatter org-shoplist-default-format))
