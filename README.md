@@ -17,13 +17,13 @@ name which can have ANY character expect `org-shoplist-ing-start-char`
 or `org-shoplist-ing-end-char`.
 ### Unit ###
 You can use any unit by default that is listed in the calc-unit-table
-(`M-x calc-view-units-table`). For additional units see([Units](#Units))
+(`M-x calc-view-units-table`). For additional units (See [Units](#Units))
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
 ever you want. Importent is that you format your ingredients
 properly. (See [Ingredients](#Ingredients))
 
-If you really need your parentheses, see ([Enclosing](#Ingredients))
+If you really need your parentheses, (See [Enclosing](#Ingredients))
 
 Some Examples for recipes:
 - As a list:
@@ -48,7 +48,7 @@ units in `org-shoplist-additional-units`.)
 Затем варить 15 минут.
 ```
 ### Nested Recipes ###
-See ([Explicitness](#Explicitness)). Sorry, for that redirect.
+(See [Explicitness](#Explicitness)). Sorry, for that redirect.
 
 ## Shopping List ##
 
