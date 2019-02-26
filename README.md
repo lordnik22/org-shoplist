@@ -15,17 +15,18 @@ ingredient: (200g Nuts), (1 Nut), (1 big Nut)
 First number (amount) with optional unit, space as separator followed by any
 name which can have ANY character expect `org-shoplist-ing-start-char`
 or `org-shoplist-ing-end-char`.
-### Units ###
+### Unit ###
 You can use any unit by default that is listed in the calc-unit-table
-(`M-x calc-view-units-table`). For additional units see(* [Units](#Units))
+(`M-x calc-view-units-table`). For additional units see([Units](#Units))
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
 ever you want. Importent is that you format your ingredients
-properly. (See * [Ingredients](#Ingredients))
+properly. (See [Ingredients](#Ingredients))
 
-If you really need your parentheses, see (* [Enclosing](#Ingredients))
+If you really need your parentheses, see ([Enclosing](#Ingredients))
 
-Some Examples:
+Some Examples for recipes:
+- As a list:
 ```
 * TOBUY Älpämagerone
 - (250ml Rahm)
@@ -33,20 +34,21 @@ Some Examples:
 - (250g Magrone)
 - (250g Emmentalerkäse)
 ```
-As a german description:
+- As a german description:
 ```
 * TOBUY Älpämagerone 2
 Nimm (250ml Rahm) und (1 Zwiebel) vermische es mit (250g Magrone) und (250g Emmentalerkäse).
 Danach 15min köcheln lassen.
 ```
-As a russian description: (there you have to describe the language-units in `org-shoplist-additional-units`.)
+- As a russian description: (there you have to describe the russian
+units in `org-shoplist-additional-units`.)
 ```
 * TOBUY Älpämagerone 3
 Возьмите (250мл сливок) и (1 луковицу) смешайте с (250г Магрона) и (250 г сыра Эмменталь).
 Затем варить 15 минут.
 ```
 ### Nested Recipes ###
-See (* [Explicitness](#Explicitness)). Sorry, for that redirect.
+See ([Explicitness](#Explicitness)). Sorry, for that redirect.
 
 ## Shopping List ##
 
@@ -56,7 +58,11 @@ See (* [Explicitness](#Explicitness)). Sorry, for that redirect.
 ## Customization ##
 ### Ingredients ###
 You can define them to be the same character `M-x customize-group
-org-shoplist`.  Also everything that is enclosed with
+org-shoplist`.
+
+### Enclosing ###
+
+Also everything that is enclosed with
 `org-shoplist-ing-start-char` or `org-shoplist-ing-end-char` and has a
 space will be handled as ingredient.
 ### Units ###
