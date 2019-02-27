@@ -10,7 +10,7 @@ eating-plans. (We talk about delicious food — nothing technical).
   `org-shoplist-shoplist-as-todo-list`
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
-`org-shoplist-ing-end-char`. Simple examples for a ingredients: 
+`org-shoplist-ing-end-char`. Simple examples for ingredients: 
 `(200g Nuts), (1 Nut), (1 big Nut)`
 
 Structure:
@@ -24,12 +24,12 @@ Structure:
 You can use any unit by default that is listed in the calc-unit-table
 (`M-x calc-view-units-table`). For additional units (See [Personal Units](#Personal-Units))
 ### Customization ###
-You can define them to be the same character `M-x customize-group
-org-shoplist`.
 #### Enclosing ####
-Also everything that is enclosed with
-`org-shoplist-ing-start-char` or `org-shoplist-ing-end-char` and has a
-space will be handled as ingredient.
+Also everything that is enclosed with `org-shoplist-ing-start-char` or
+`org-shoplist-ing-end-char` and has a space will be handled as
+ingredient. `org-shoplist-ing-start-char` and
+`org-shoplist-ing-end-char` can be the same char or they could even be
+string.
 #### Personal Units ####
 If you want to use your perosnal units you can add
 there definition to the variable `org-shoplist-additional-units`. A
@@ -87,7 +87,6 @@ in `org-shoplist-additional-units`.)
 You can also have nested headers (See [Explicitness](#Explicitness)).
 
 ### Customization ###
-
 #### Explicitness ####
 There are two behaviors depending on `org-shoplist-explicit-keyword`
 (by defualt it's nil). 
@@ -125,7 +124,7 @@ RET` in your org-file where recipe with the `org-shoplist-keyword` are
 present.
 ### Customization ###
 #### Aggregation ####
-You can turn of aggregation by setting `org-shoplist-aggregate` to
+You can turn off aggregation by setting `org-shoplist-aggregate` to
 nil.
 #### Format ####
 The format is established by a function which takes a shoplist as it's
@@ -135,3 +134,6 @@ own shoplist-formating-function, you may find it helpful reading the
 functions `org-shoplist-shoplist-as-table` or
 `org-shoplist-shoplist-as-todo-list` in org-shoplist.el. After evaling
 your function you can inject them when calling `org-shoplist`.
+
+## Other Customization ##
+Press `M-x customize-group org-shoplist ENT` for all custom variables.
