@@ -350,6 +350,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   (save-excursion
     (funcall 'org-mode)
     (insert as-format)
+    (goto-char (point-min))
     (when (org-at-table-p) (org-table-align))))
 
 (defun org-shoplist (formatter)
