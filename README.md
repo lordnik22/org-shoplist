@@ -11,7 +11,7 @@ eating-plans. (We talk about delicious food — nothing technical).
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char`. Simple examples for ingredients: 
-`(200g Nuts), (1 Nut), (1 big Nut)`
+`(200g nuts), (1 nut), (1 big nut)`
 
 Structure:
 1. `org-shoplist-ing-start-char` (default: '(')
@@ -49,12 +49,12 @@ unit) use "one" as definition: `((myUnit "1" "*My Special unit"))`
 
 Circular definitions lead to errors: `((myUnit "myUnit" "*My Special unit"))`
 
-Beaware when using relative units like cups that all cups get aggregated together.
+Beware when using relative units like cups that all cups get aggregated together.
 
 
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
-ever you want. Importent is that you format your ingredients
+ever you want. Important is that you format your ingredients
 properly. (See [Ingredients](#Ingredients))
 
 If you really need your parentheses, (See [Enclosing](#Enclosing))
@@ -105,14 +105,14 @@ When nil, all ingredients of nested headers are included.
 
 When non-nil, only the headers with the `org-shoplist-keyword` are
 included in the shopping list. In this example we have a cream with
-flaks and chocolate but without vanilla.
+flakes and chocolate but without vanilla.
 
 ```
 * TOBUY Cream
-- (250g flaks)
+- (250g flakes)
 ** TOBUY with chocolate
 - (100g chocolate
-** with vanilla  2
+** with vanilla
 - (250ml vanilla)
 ```
 ## Shopping List ##
@@ -120,20 +120,19 @@ A shopping list is a collection of ingredients, collected from the
 marked recipes.
 
 You can generate a shopping list by pressing `M-x org-shoplist RET
-RET` in your org-file where recipe with the `org-shoplist-keyword` are
+RET` in your org-file where recipes with the `org-shoplist-keyword` are
 present.
 ### Customization ###
 #### Aggregation ####
 You can turn off aggregation by setting `org-shoplist-aggregate` to
 nil.
 #### Format ####
-The format is established by a function which takes a shoplist as it's
+The format is established by a function which takes a shopping list as it's
 arguments. The defualt format is defined by
 `org-shoplist-default-format`. If you are interested in writing your
-own shoplist-formating-function, you may find it helpful reading the
+own shoppinglist-formating-function, you may find it helpful reading the
 functions `org-shoplist-shoplist-as-table` or
 `org-shoplist-shoplist-as-todo-list` in org-shoplist.el. After evaling
 your function you can inject them when calling `org-shoplist`.
-
 ## Other Customization ##
 Press `M-x customize-group org-shoplist ENT` for all custom variables.

@@ -249,23 +249,4 @@ Für die Sauce brauchen wir:
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400g" "Nuts")))
 		    (org-shoplist-shoplist-read t))))))
-
-(ert-deftest org-shoplist-test/shoplist-insert-400g-Nuts ()
-  "Insert a simple shoplist in table format."
-  (org-shoplist-test-test-in-org-buffer
-   (lambda ()
-     (goto-char (point-min))
-     (org-shoplist-shoplist-insert (funcall org-shoplist-default-format (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400g" "Nuts")))))
-     (should (string= (buffer-string)
-		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Nuts|400g|\n"))))))
-
-(ert-deftest org-shoplist-test/shoplist-insert-400ml-Milk ()
-  "Insert a simple shoplist in table format with a readable unit."
-  (org-shoplist-test-test-in-org-buffer
-   (lambda ()
-     (goto-char (point-min))
-     (org-shoplist-shoplist-insert (funcall org-shoplist-default-format (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400ml" "Milk")))))
-     (should (string= (buffer-string)
-		      (concat "|" (mapconcat 'identity org-shoplist-table-header "|") "|\n" "|Milk|400ml|\n"))))))
-
 ;;; org-shoplist-test.el ends here

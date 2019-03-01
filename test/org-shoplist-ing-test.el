@@ -14,21 +14,40 @@
   (should (equal '(user-error "Invalid ‘NAME’(nil) for ingredient")
 		 (should-error (org-shoplist-ing-create "100g" nil)))))
 
-(ert-deftest org-shoplist-test/ing-create-test-diff-valid-amount ()
-  (should (equal '("Nuts" "0g" "g") (org-shoplist-ing-create "0g" "Nuts")))
-  (should (equal '("Nuts" "100g" "g") (org-shoplist-ing-create "100g" "Nuts")))
-  (should (equal '("Nuts" "99999g" "g") (org-shoplist-ing-create "99999g" "Nuts")))
-  (should (equal '("Milk" "9tsp" "m^3") (org-shoplist-ing-create "9tsp" "Milk")))
-  (should (equal '("Nuts" "400g" "g") (org-shoplist-ing-create "400g" "Nuts")))
-  (should (equal '("Nuts" "1.ml" "m^3") (org-shoplist-ing-create "1.0 ml" "Nuts")))
-  (should (equal '("Nuts" "100gal" "m^3") (org-shoplist-ing-create "100 gal" "Nuts")))
-  (should (equal '("Nuts" "2390m^3" "m^3") (org-shoplist-ing-create "2390 m^3" "Nuts")))
-  (should (equal '("Nuts" "2.39m^3" "m^3") (org-shoplist-ing-create "2390e-3 m^3" "Nuts")))
-  (should (equal '("Nuts" "0.0239m^3" "m^3") (org-shoplist-ing-create "23.90e-3 m^3" "Nuts")))
-  (should (equal '("Nuts" "35" "1") (org-shoplist-ing-create "12+23" "Nuts")))
-  (should (equal '("Nuts" "24" "1") (org-shoplist-ing-create "12*2" "Nuts")))
-  (should (equal '("Nuts" "24mg" "g") (org-shoplist-ing-create "12mg*2" "Nuts")))
-  (should (equal '("Nuts" "21pwerg" "1") (org-shoplist-ing-create "21pwerg" "Nuts"))))
+(ert-deftest org-shoplist-test/calc-eval-valid-test ()
+  "Test a weide range of diff amounts"
+  (should (string= "0g" (org-shoplist-ing--transform-amount "0g")))
+  (should (string= "100g" (org-shoplist-ing--transform-amount "100g")))
+  (should (string= "99999g" (org-shoplist-ing--transform-amount "99999g")))
+  (should (string= "9tsp" (org-shoplist-ing--transform-amount "9tsp")))
+  (should (string= "400g" (org-shoplist-ing--transform-amount "400g")))
+  (should (string= "1ml" (org-shoplist-ing--transform-amount "1.0ml")))
+  (should (string= "100gal" (org-shoplist-ing--transform-amount "100gal")))
+  (should (string= "100gal" (org-shoplist-ing--transform-amount "100 gal")))
+  (should (string= "2390m^3" (org-shoplist-ing--transform-amount "2390 m^3")))
+  (should (string= "2.39m^3" (org-shoplist-ing--transform-amount "2390e-3 m^3")))
+  (should (string= "0.0239m^3" (org-shoplist-ing--transform-amount "23.90e-3 m^3")))
+  (should (string= "35" (org-shoplist-ing--transform-amount "12+23")))
+  (should (string= "24" (org-shoplist-ing--transform-amount "12*2")))
+  (should (string= "24mg" (org-shoplist-ing--transform-amount "12mg*2")))
+  (should (string= "21pwerg" (org-shoplist-ing--transform-amount "21pwerg"))))
+
+(ert-deftest org-shoplist-test/calc-eval-error-test ()
+  "Test if error is thown when passing invalid amounts"
+  (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
+		  (should-error (org-shoplist-ing--transform-amount "df.df"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1999g) for ingredient")
+		 (should-error (org-shoplist-ing--transform-amount "1ml+1999g"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1g) for ingredient")
+		 (should-error (org-shoplist-ing--transform-amount "1ml+1g"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
+		 (should-error (org-shoplist-ing-create "df.df" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(-234) for ingredient")
+		 (should-error (org-shoplist-ing-create "-234" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(a>1234) for ingredient")
+		 (should-error (org-shoplist-ing-create "a>1234" "Nuts"))))
+  (should (equal '(user-error "Invalid ‘AMOUNT’(..02 gal) for ingredient")
+		 (should-error (org-shoplist-ing-create "..02 gal" "Nuts")))))
 
 (ert-deftest org-shoplist-test/ing-create-test-diff-wrong-amount ()
   (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
@@ -167,7 +186,7 @@
 		  (org-shoplist-ing-create "1" "Egg"))
 		 (org-shoplist-ing-read nil "(100g Nuts)(100ml Milk)(100kg Flour)(1 Egg)"))))
 
-(ert-deftest org-shoplist-test/ing-read-no-pars-read-at-point ()
+(ert-deftest org-shoplist-test/ing-read-no-param-read-at-point ()
   "Parse line where point is at when no parameters passed"
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
@@ -182,8 +201,7 @@
      (insert "Nuts")
      (goto-char (point-min))
      (search-forward-regexp "s" nil t 1)
-     (should (eq nil
-		 (org-shoplist-ing-read))))))
+     (should (eq nil (org-shoplist-ing-read))))))
 
 (ert-deftest org-shoplist-test/ing-read-when-previous-search-with-ings ()
   "Parse line where point is at when no parameters passed"
@@ -215,6 +233,27 @@
   (should (equal (list (org-shoplist-ing-create "100g" "Nuts")
 		       (org-shoplist-ing-create "1cl" "Nuts"))
 		 (org-shoplist-ing-read t "(100g Nuts)(1cl Nuts)"))))
+
+(ert-deftest org-shoplist-test/ing-double-enclosed-ing ()
+  "Get ing when it’s double inclosed."
+  (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-ing-read nil "((200g Nuts))"))))
+
+(ert-deftest org-shoplist-test/ing-double-enclosed-ing-with-text-in-outer-pars ()
+  "Get ing when it’s double inclosed."
+  (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-ing-read nil "(asd (200g Nuts) asd)"))))
+
+(ert-deftest org-shoplist-test/ing-double-enclosed-ing-with-ing-like-text-in-outer-pars ()
+  "Get ing when it’s double inclosed."
+  (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-ing-read nil "(100g Nuts (200g Nuts))"))))
+
+(ert-deftest org-shoplist-test/two-ing-double-enclosed ()
+  "Get ing when it’s double inclosed."
+  (should (equal (list (org-shoplist-ing-create "100g" "Nuts")
+		       (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-ing-read nil "((100g Nuts) (200g Nuts))"))))
 
 (ert-deftest org-shoplist-test/ing-multiply-ing-nil ()
   "Return error when passing invalid ingredients."

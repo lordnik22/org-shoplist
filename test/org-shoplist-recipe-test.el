@@ -392,7 +392,7 @@ Für die Sauce brauchen wir:
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
-- (400.g Nuts)")))
+- (400g Nuts)")))
      (should (= (point) (point-min))))))
 
 (ert-deftest org-shoplist-test/factor-up-2-3-one-header-one-ingredient ()
@@ -410,7 +410,7 @@ Für die Sauce brauchen wir:
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   3
   :END:
-- (300.g Nuts)")))
+- (300g Nuts)")))
      (should (= (point) (point-min))))))
 
 (ert-deftest org-shoplist-test/factor-up-1-2-one-header-two-ingredient ()
@@ -429,8 +429,8 @@ Für die Sauce brauchen wir:
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
-- (400.g Nuts)
-- (200.ml Milk)")))
+- (400g Nuts)
+- (200ml Milk)")))
      (should (= (point) (point-min))))))
 
 ;;; org-shoplist-recipe-test.el ends here
