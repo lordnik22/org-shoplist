@@ -85,9 +85,15 @@ When nil won’t aggregate."
 (defconst org-shoplist-ing-amount-regex "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
   "Match an amount in a string.")
 
-(defconst org-shoplist-ing-regex '(let ((r-group (format "\\([^%s%s]+?\\)" org-shoplist-ing-start-char org-shoplist-ing-end-char)))
-			(concat "(" r-group "[ ]" r-group ")"))
+(defconst org-shoplist--ing-group-regex '(format "\\([^%s%s]+?\\)" (regexp-quote org-shoplist-ing-start-char) (regexp-quote org-shoplist-ing-end-char))
+  "A regex which matches a part of a ingredient.")
+
+(defconst org-shoplist-ing-regex '(let ((g (eval org-shoplist--ing-group-regex)))
+			(concat (format "%s%s[[:space:]]+%s%s" (regexp-quote org-shoplist-ing-start-char) g g (regexp-quote org-shoplist-ing-end-char))))
   "Match an ingredient.")
+
+(defconst org-shoplist-ing-default-separator " "
+  "Default separator for a ing parts.")
 
 ;; Inject custom units
 (when (not (eq nil org-shoplist-additional-units))
@@ -143,13 +149,15 @@ When ‘AMOUNT’ nil, return nil"
   (car (cdr (cdr ing))))
 
 (defun org-shoplist-ing-string (ing)
-  "Return ‘ING’ as follow: “(amount name)”."
+  "Return ‘ING’ as follow: “(amount name)”.
+‘SEPARATOR’ is by default a space.  Can be any string."
   (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) " " (org-shoplist-ing-name ing) org-shoplist-ing-end-char))
 
 (defun org-shoplist-ing-create (amount name)
   "Create an ingredient.
 ‘AMOUNT’ can be a string, a number or a valid sequence.
 ‘NAME’ is a string.
+‘SEPARATOR’ a string by which ‘NAME’ and ‘AMOUNT’ got separated.
 If one constraint gets disregarded throw error."
   (save-match-data
     (when (not (stringp name)) (user-error "Invalid ‘NAME’(%s) for ingredient" name))
@@ -185,7 +193,7 @@ Return new ingredient with modified amount."
 	(aggregate-ings (list)))
     (while (not (eq nil (car group-ings)))
       (setq aggregate-ings (cons (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (cdr (car group-ings)))
-					      (car (car (car group-ings))))
+					      (org-shoplist-ing-name (car (car group-ings))))
 				 aggregate-ings))
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
@@ -206,16 +214,25 @@ Whenn ‘STR’ is nil read line where point is at."
 		(match-string 1 str)
 		(match-string 2 str))
 	       ings))
+
       ings))
+  (defun org-shoplist--concat-when-broken (last-pos)
+    "Concat broken ing when it’s splitted into two by newline."
+    (when-let (ing-start (when (string-match (concat (regexp-quote org-shoplist-ing-start-char) (eval org-shoplist--ing-group-regex) "$") str last-pos)
+			   (match-string 0 str)))
+      (beginning-of-line 2)
+      (let ((nl (thing-at-point 'line)))
+	(when-let (ing-end (when (string-match (concat "^" (eval org-shoplist--ing-group-regex) (regexp-quote org-shoplist-ing-end-char)) nl)
+			     (match-string 0 nl)))
+	  (concat ing-start " " ing-end)))))
   (when (eq str nil) (setq str (thing-at-point 'line)))
-  (if (or (eq nil str) (string= str ""))
-      nil
+  (when (not (or (eq nil str) (string= str "")))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
+      (when-let ((breaked-ing (save-excursion (org-shoplist--concat-when-broken (if (eq nil read-ings) 0 (match-end 0))))))
+	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
       (if aggregate
 	  (apply 'org-shoplist-ing-aggregate read-ings)
 	(reverse read-ings)))))
-
-
 
 (defun org-shoplist-recipe-create (name &rest ings)
   "Create a recipe.

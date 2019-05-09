@@ -252,6 +252,21 @@ Für die Sauce brauchen wir:
      (should (equal '(user-error "Invalid ‘AMOUNT’(200mg.) for ingredient")
 		    (should-error (org-shoplist-recipe-read)))))))
 
+(ert-deftest org-shoplist-test/recipe-read-three-ings-two-broken ()
+  "Read broken ings as normal when reading recipes."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Rezept 1
+Die (100g Nuts) (200ml
+ Milk) (100g
+Salad) mahlen.")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-recipe-create "Rezept 1"
+			     (org-shoplist-ing-create "100g" "Nuts")
+			     (org-shoplist-ing-create "200ml" "Milk")
+			     (org-shoplist-ing-create "100g" "Salad"))
+		    (org-shoplist-recipe-read))))))
+
 (ert-deftest org-shoplist-test/recipe-*-nil-nil ()
   "From nothing comes nothing."
   (should (eq nil (org-shoplist-recipe-* nil nil))))
@@ -433,4 +448,22 @@ Für die Sauce brauchen wir:
 - (200ml Milk)")))
      (should (= (point) (point-min))))))
 
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-one-broken-ing ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (200g
+Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (400g Nuts)")))
+     (should (= (point) (point-min))))))
 ;;; org-shoplist-recipe-test.el ends here

@@ -14,6 +14,8 @@
 	(cons org-shoplist-ing-amount-regex 'org-shoplist-ing-amount-regex)
 	(cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
 	(cons org-shoplist-additional-units 'org-shoplist-additional-units)
+	(cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
+	(cons org-shoplist-ing-end-char 'org-shoplist-ing-end-char)
 	(cons math-additional-units 'math-additional-units)
 	(cons org-shoplist-table-header 'org-shoplist-table-header)
 	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)

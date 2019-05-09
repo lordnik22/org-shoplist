@@ -186,6 +186,45 @@
 		  (org-shoplist-ing-create "1" "Egg"))
 		 (org-shoplist-ing-read nil "(100g Nuts)(100ml Milk)(100kg Flour)(1 Egg)"))))
 
+(ert-deftest org-shoplist-test/ing-read-str-with-line-break ()
+  "When there is a line-break keep up reading the ingredient."
+  (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
+		 (org-shoplist-ing-read nil "(100g
+Nuts)")))
+  (should (equal (list (org-shoplist-ing-create "100g" "red Berries"))
+		 (org-shoplist-ing-read nil "(100g
+red Berries)"))))
+
+(ert-deftest org-shoplist-test/ing-read-line-with-line-break ()
+  "Read line in buffer, but read the whole ing which ends on next line."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "(100g
+Nuts)")
+     (goto-char (point-min))
+     (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
+		    (org-shoplist-ing-read nil nil))))))
+
+(ert-deftest org-shoplist-test/ing-read-two-ings-one-broken ()
+  "Read line in buffer, but read the whole ing which ends on next line."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "(100ml Milk) (100g
+Nuts)")
+     (goto-char (point-min))
+     (should (equal (list (org-shoplist-ing-create "100ml" "Milk") (org-shoplist-ing-create "100g" "Nuts"))
+		    (org-shoplist-ing-read nil nil))))))
+
+(ert-deftest org-shoplist-test/ing-read-line-with-custom-start-and-end-char ()
+  "Read ing as normal with custom chars."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-ing-start-char "/")
+     (setq org-shoplist-ing-end-char "\\")
+     (insert "/100g Nuts\\")
+     (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
+		    (org-shoplist-ing-read nil nil))))))
+
 (ert-deftest org-shoplist-test/ing-read-no-param-read-at-point ()
   "Parse line where point is at when no parameters passed"
   (org-shoplist-test-test-in-org-buffer
