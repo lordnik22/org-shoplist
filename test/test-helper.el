@@ -4,9 +4,15 @@
 ;;; Code:
 (require 'org-shoplist)
 (require 'calc-units)
+(load (concat default-directory "../org-shoplist.el"))
 
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
+
+(defvar org-shoplist-test-files
+  (list "./org-shoplist-ing-test.el"
+	"./org-shoplist-recipe-test.el"
+	"./org-shoplist-test.el"))
 
 (defvar org-shoplist-test-backup-vars
   (list (cons org-shoplist-keyword 'org-shoplist-keyword)
@@ -59,4 +65,8 @@
    (lambda ()
      (org-mode)
      (funcall func-in-org-buffer))))
+
+(dolist (f org-shoplist-test-files)
+  (load (concat default-directory f)))
+
 ;;; test-helper.el ends here
