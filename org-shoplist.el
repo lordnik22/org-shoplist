@@ -88,21 +88,33 @@ When nil won’t aggregate."
   "Match a unit in a string.")
 
 (defconst org-shoplist-ing-amount-regex "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
-  "Match an amount in a string.")
+  "Match an amount in a string in a exact fashion.")
 
-(defconst org-shoplist--ing-one-content-regex '(format "\\([^%s%s]+?\\)" (regexp-quote org-shoplist-ing-start-char) (regexp-quote org-shoplist-ing-end-char))
-  "A regex which matches one part of a ingredient.")
+(defconst org-shoplist--ing-first-part-regex '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
+					  (regexp-quote org-shoplist-ing-start-char)
+					  (regexp-quote org-shoplist-ing-end-char)
+					  (regexp-quote org-shoplist-ing-start-char)
+					  (regexp-quote org-shoplist-ing-end-char))
+  "A regex which matches first part of ingredient the amount.")
 
-(defconst org-shoplist--ing-content-spliter-regex "\\([[:space:]]\\)+"
+(defconst org-shoplist--ing-second-part-regex '(format "\\([^[:space:]%s%s]?[^%s%s]+?\\)"
+					   (regexp-quote org-shoplist-ing-start-char)
+					   (regexp-quote org-shoplist-ing-end-char)
+					   (regexp-quote org-shoplist-ing-start-char)
+					   (regexp-quote org-shoplist-ing-end-char))
+  "A regex which matches second part of the ingredient the name.")
+
+(defconst org-shoplist--ing-content-spliter-regex "\\([[:space:]]+\\)"
   "A regex which matches whitespace which splits the date of ingredient.")
 
-(defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]\\)*"
+(defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]*\\)"
   "A regex which matches whitespace which splits the date of ingredient.")
 
-
-(defconst org-shoplist-ing-regex '(let ((g (eval org-shoplist--ing-one-content-regex))
-			    (ws (eval org-shoplist--ing-content-spliter-regex)))
-			(concat (format "%s%s%s%s%s" (regexp-quote org-shoplist-ing-start-char) g ws g (regexp-quote org-shoplist-ing-end-char))))
+(defconst org-shoplist-ing-regex '(concat (regexp-quote org-shoplist-ing-start-char)
+			      (eval org-shoplist--ing-first-part-regex)
+			      (eval org-shoplist--ing-content-spliter-regex)
+			      (eval org-shoplist--ing-second-part-regex)
+			      (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
 ;; Inject custom units
@@ -237,14 +249,18 @@ Whenn ‘STR’ is nil read line where point is at."
   (defun org-shoplist--concat-when-broken (last-pos)
     "Concat broken ing when it’s splitted into two by newline."
     (when-let (ing-start (when (string-match (concat (regexp-quote org-shoplist-ing-start-char)
-						     (eval org-shoplist--ing-one-content-regex)
+						     (eval org-shoplist--ing-first-part-regex)
 						     (eval org-shoplist--ing-content-spliter-regex)
 						     "$")
 					     str last-pos)
 			   (match-string 0 str)))
       (beginning-of-line 2)
       (let ((nl (thing-at-point 'line)))
-	(when-let (ing-end (when (string-match (concat "^" (eval org-shoplist--ing-optional-content-spliter-regex) (eval org-shoplist--ing-one-content-regex) (regexp-quote org-shoplist-ing-end-char)) nl)
+	(when-let (ing-end (when (string-match (concat "^"
+						       (eval org-shoplist--ing-optional-content-spliter-regex)
+						       (eval org-shoplist--ing-second-part-regex)
+						       (regexp-quote org-shoplist-ing-end-char))
+					       nl)
 			     (match-string 0 nl)))
 	  (concat ing-start ing-end)))))
   (when (eq str nil) (setq str (thing-at-point 'line)))
