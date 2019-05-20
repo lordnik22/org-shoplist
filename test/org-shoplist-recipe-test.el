@@ -258,13 +258,13 @@ Für die Sauce brauchen wir:
    (lambda ()
      (insert "* Rezept 1
 Die (100g Nuts) (200ml
- Milk) (100g
+Milk) (100g
 Salad) mahlen.")
      (goto-char (point-min))
      (should (equal (org-shoplist-recipe-create "Rezept 1"
-			     (org-shoplist-ing-create "100g" "Nuts")
-			     (org-shoplist-ing-create "200ml" "Milk")
-			     (org-shoplist-ing-create "100g" "Salad"))
+			     (org-shoplist-ing-create "100g" "Nuts" " ")
+			     (org-shoplist-ing-create "200ml" "Milk" " \n")
+			     (org-shoplist-ing-create "100g" "Salad" "\n"))
 		    (org-shoplist-recipe-read))))))
 
 (ert-deftest org-shoplist-test/recipe-*-nil-nil ()
@@ -464,6 +464,7 @@ Nuts)")
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
-- (400g Nuts)")))
+- (400g
+Nuts)")))
      (should (= (point) (point-min))))))
 ;;; org-shoplist-recipe-test.el ends here

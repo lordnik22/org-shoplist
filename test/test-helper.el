@@ -20,7 +20,8 @@
 	(cons org-shoplist-table-header 'org-shoplist-table-header)
 	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
 	(cons org-shoplist-default-format 'org-shoplist-default-format)
-	(cons math-simplifying-units 'math-simplifying-units)))
+	(cons math-simplifying-units 'math-simplifying-units)
+	(cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)))
 
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."

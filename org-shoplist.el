@@ -20,7 +20,7 @@
 (require 'calc-units)
 (require 'org)
 (require 'calendar)
-(require 'cl)
+(eval-when-compile (require 'cl))
 
 (defcustom org-shoplist-buffer-name "*Shopping List*"
   "Name of buffer when generating a shopping list."
@@ -79,21 +79,31 @@ When nil won’t aggregate."
   :type 'symbol
   :group 'org-shoplist)
 
+(defcustom org-shoplist-ing-default-separator " "
+  "Default separator for a ing parts."
+  :type 'string
+  :group 'org-shoplist)
+
 (defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string.")
 
 (defconst org-shoplist-ing-amount-regex "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
   "Match an amount in a string.")
 
-(defconst org-shoplist--ing-group-regex '(format "\\([^%s%s]+?\\)" (regexp-quote org-shoplist-ing-start-char) (regexp-quote org-shoplist-ing-end-char))
-  "A regex which matches a part of a ingredient.")
+(defconst org-shoplist--ing-one-content-regex '(format "\\([^%s%s]+?\\)" (regexp-quote org-shoplist-ing-start-char) (regexp-quote org-shoplist-ing-end-char))
+  "A regex which matches one part of a ingredient.")
 
-(defconst org-shoplist-ing-regex '(let ((g (eval org-shoplist--ing-group-regex)))
-			(concat (format "%s%s[[:space:]]+%s%s" (regexp-quote org-shoplist-ing-start-char) g g (regexp-quote org-shoplist-ing-end-char))))
+(defconst org-shoplist--ing-content-spliter-regex "\\([[:space:]]\\)+"
+  "A regex which matches whitespace which splits the date of ingredient.")
+
+(defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]\\)*"
+  "A regex which matches whitespace which splits the date of ingredient.")
+
+
+(defconst org-shoplist-ing-regex '(let ((g (eval org-shoplist--ing-one-content-regex))
+			    (ws (eval org-shoplist--ing-content-spliter-regex)))
+			(concat (format "%s%s%s%s%s" (regexp-quote org-shoplist-ing-start-char) g ws g (regexp-quote org-shoplist-ing-end-char))))
   "Match an ingredient.")
-
-(defconst org-shoplist-ing-default-separator " "
-  "Default separator for a ing parts.")
 
 ;; Inject custom units
 (when (not (eq nil org-shoplist-additional-units))
@@ -148,23 +158,28 @@ When ‘AMOUNT’ nil, return nil"
   "Get group of ‘ING’."
   (car (cdr (cdr ing))))
 
+(defun org-shoplist-ing-separator (ing)
+  "Get separator of ‘ING’."
+  (car (cdr (cdr (cdr ing)))))
+
 (defun org-shoplist-ing-string (ing)
   "Return ‘ING’ as follow: “(amount name)”.
 ‘SEPARATOR’ is by default a space.  Can be any string."
-  (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) " " (org-shoplist-ing-name ing) org-shoplist-ing-end-char))
+  (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing) org-shoplist-ing-end-char))
 
-(defun org-shoplist-ing-create (amount name)
+(defun org-shoplist-ing-create (amount name &optional separator)
   "Create an ingredient.
 ‘AMOUNT’ can be a string, a number or a valid sequence.
 ‘NAME’ is a string.
-‘SEPARATOR’ a string by which ‘NAME’ and ‘AMOUNT’ got separated.
+‘SEPARATOR’ a string by which ‘NAME’ and ‘AMOUNT’ is separated.
 If one constraint gets disregarded throw error."
   (save-match-data
-    (when (not (stringp name)) (user-error "Invalid ‘NAME’(%s) for ingredient" name))
+    (when (not (stringp name)) (user-error "Invalid ‘NAME’(%S) for ingredient" name))
     (let ((transform-amount (org-shoplist-ing--transform-amount amount)))
       (list name
 	    transform-amount
-	    (org-shoplist--ing-find-unit-group transform-amount)))))
+	    (org-shoplist--ing-find-unit-group transform-amount)
+	    (if (eq nil separator) org-shoplist-ing-default-separator separator)))))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
@@ -173,11 +188,11 @@ If one constraint gets disregarded throw error."
 				       ((integerp x) (number-to-string x))
 				       ((eq nil x) "0")
 				       ((listp x) (org-shoplist-ing-amount x))
-				       (t (user-error "Given ‘AMOUNT’(%s) can’t be converted" x))))
+				       (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
 			       amounts "+")))
     (if-let ((t-sum-amount (ignore-errors (org-shoplist-ing--transform-amount sum-amount))))
 	t-sum-amount
-      (user-error "Incompatible units while aggregating(%s)" amounts))))
+      (user-error "Incompatible units while aggregating(%S)" amounts))))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
@@ -185,7 +200,8 @@ Return new ingredient with modified amount."
   (if (= factor 0) nil
     (org-shoplist-ing-create
      (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing))
-     (org-shoplist-ing-name ing))))
+     (org-shoplist-ing-name ing)
+     (org-shoplist-ing-separator ing))))
 
 (defun org-shoplist-ing-aggregate (&rest ings)
   "Aggregate ‘INGS’."
@@ -193,7 +209,8 @@ Return new ingredient with modified amount."
 	(aggregate-ings (list)))
     (while (not (eq nil (car group-ings)))
       (setq aggregate-ings (cons (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (cdr (car group-ings)))
-					      (org-shoplist-ing-name (car (car group-ings))))
+					      (org-shoplist-ing-name (car (car group-ings)))
+					      (org-shoplist-ing-separator (car (car group-ings))))
 				 aggregate-ings))
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
@@ -212,19 +229,24 @@ Whenn ‘STR’ is nil read line where point is at."
 	 (match-end 0)
 	 (cons (org-shoplist-ing-create
 		(match-string 1 str)
+		(match-string 3 str)
 		(match-string 2 str))
 	       ings))
 
       ings))
   (defun org-shoplist--concat-when-broken (last-pos)
     "Concat broken ing when it’s splitted into two by newline."
-    (when-let (ing-start (when (string-match (concat (regexp-quote org-shoplist-ing-start-char) (eval org-shoplist--ing-group-regex) "$") str last-pos)
+    (when-let (ing-start (when (string-match (concat (regexp-quote org-shoplist-ing-start-char)
+						     (eval org-shoplist--ing-one-content-regex)
+						     (eval org-shoplist--ing-content-spliter-regex)
+						     "$")
+					     str last-pos)
 			   (match-string 0 str)))
       (beginning-of-line 2)
       (let ((nl (thing-at-point 'line)))
-	(when-let (ing-end (when (string-match (concat "^" (eval org-shoplist--ing-group-regex) (regexp-quote org-shoplist-ing-end-char)) nl)
+	(when-let (ing-end (when (string-match (concat "^" (eval org-shoplist--ing-optional-content-spliter-regex) (eval org-shoplist--ing-one-content-regex) (regexp-quote org-shoplist-ing-end-char)) nl)
 			     (match-string 0 nl)))
-	  (concat ing-start " " ing-end)))))
+	  (concat ing-start ing-end)))))
   (when (eq str nil) (setq str (thing-at-point 'line)))
   (when (not (or (eq nil str) (string= str "")))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
