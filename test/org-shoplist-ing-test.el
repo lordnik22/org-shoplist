@@ -22,7 +22,11 @@
 
 (ert-deftest org-shoplist-test/transform-amount-valid-test ()
   "Test a weide range of diff amounts"
+  (should (string= "1" (org-shoplist-ing--transform-amount nil)))
+  (should (string= "1" (org-shoplist-ing--transform-amount "0")))
   (should (string= "0g" (org-shoplist-ing--transform-amount "0g")))
+  (should (string= "1" (org-shoplist-ing--transform-amount "1")))
+  (should (string= "2" (org-shoplist-ing--transform-amount "2.0")))
   (should (string= "100g" (org-shoplist-ing--transform-amount "100g")))
   (should (string= "99999g" (org-shoplist-ing--transform-amount "99999g")))
   (should (string= "9tsp" (org-shoplist-ing--transform-amount "9tsp")))

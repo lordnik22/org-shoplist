@@ -467,4 +467,22 @@ Nuts)")
 - (400g
 Nuts)")))
      (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-one-ing-without-unit ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (1 Orange)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (2 Orange)")))
+     (should (= (point) (point-min))))))
 ;;; org-shoplist-recipe-test.el ends here
