@@ -1,6 +1,6 @@
 ;;; org-shoplist.el --- Eat the world -*- lexical-binding: t -*-
 
-;; Copyright (C) 2017 Free Software Foundation, Inc.
+;; Copyright (C) 2019 Free Software Foundation, Inc.
 
 ;; Author: lordnik22
 ;; Version: 1.0.0
@@ -12,7 +12,6 @@
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;; Commentary:
-;; There is nothing done, yet.
 ;;; Code:
 (require 'subr-x)
 (require 'seq)
@@ -38,7 +37,7 @@
   :group 'org-shoplist)
 
 (defcustom org-shoplist-table-header (list "Ingredient" "Amount")
-  "This varaible defines the header of the standard ingredient header."
+  "Defines the header of the standard ingredient header."
   :type '(repeat string)
   :group 'shoplist)
 
@@ -119,7 +118,7 @@ When nil won’t aggregate."
 
 ;; Inject custom units
 (when (not (eq nil org-shoplist-additional-units))
-  (eval-after-load "calc-units" '(dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))))
+  (eval-after-load "calc-units" #'(dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))))
 
 (defun org-shoplist--ing-find-unit-group (amount)
   "Find the ground unit of ‘AMOUNT’s unit.
@@ -138,7 +137,7 @@ When ‘AMOUNT’ nil, return nil"
       (when (string= "0" e-str) (setq e-str (concat e-str (calc-eval (math-extract-units (math-read-expr str))))))
       (when (> 0 (string-to-number (substring e-str 0 1))) (setq e-str (concat "1" e-str )))
       (when (string-match "\\(\\.\\)[^0-9]" e-str) (setq e-str (replace-match "" t t e-str 1)))
-      (apply 'concat
+      (apply #'concat
 	     (split-string
 	      (concat (math-round (calc-eval (math-remove-units (math-read-expr e-str))))
 		      (when-let ((unit (calc-eval (math-extract-units (math-read-expr e-str))))
@@ -220,7 +219,7 @@ Return new ingredient with modified amount."
   (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x))) ings))
 	(aggregate-ings (list)))
     (while (not (eq nil (car group-ings)))
-      (setq aggregate-ings (cons (org-shoplist-ing-create (apply 'org-shoplist-ing-+ (cdr (car group-ings)))
+      (setq aggregate-ings (cons (org-shoplist-ing-create (apply #'org-shoplist-ing-+ (cdr (car group-ings)))
 					      (org-shoplist-ing-name (car (car group-ings)))
 					      (org-shoplist-ing-separator (car (car group-ings))))
 				 aggregate-ings))
@@ -269,7 +268,7 @@ Whenn ‘STR’ is nil read line where point is at."
       (when-let ((breaked-ing (save-excursion (org-shoplist--concat-when-broken (if (eq nil read-ings) 0 (match-end 0))))))
 	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
       (if aggregate
-	  (apply 'org-shoplist-ing-aggregate read-ings)
+	  (apply #'org-shoplist-ing-aggregate read-ings)
 	(reverse read-ings)))))
 
 (defun org-shoplist-recipe-create (name &rest ings)
@@ -337,7 +336,7 @@ recipes."
 		 (beginning-of-line 2))
 	       ing-list))))
       (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
-		      (if aggregate (apply 'org-shoplist-ing-aggregate read-ings) read-ings)))))
+		      (if aggregate (apply #'org-shoplist-ing-aggregate read-ings) read-ings)))))
 
 (defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
@@ -347,8 +346,8 @@ recipes."
       nil
     (list (calendar-current-date)
 	  recipes
-	  (reverse (apply 'org-shoplist-ing-aggregate
-			  (apply 'append (mapcar 'org-shoplist-recipe-get-all-ing recipes)))))))
+	  (reverse (apply #'org-shoplist-ing-aggregate
+			  (apply #'append (mapcar #'org-shoplist-recipe-get-all-ing recipes)))))))
 
 (defun org-shoplist-shoplist-creation-date (shoplist)
   "Get shopdate of shoplist.
@@ -386,7 +385,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 		     (setq recipe-list (list (org-shoplist-recipe-read aggregate explicit-match)))
 		   (push (org-shoplist-recipe-read aggregate explicit-match) recipe-list))))
 	     recipe-list))))
-    (apply 'org-shoplist-shoplist-create (reverse recipe-list))))
+    (apply #'org-shoplist-shoplist-create (reverse recipe-list))))
 
 (defun org-shoplist-shoplist-as-table (shoplist)
   "Format ‘SHOPLIST’ as table."
@@ -410,7 +409,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 (defun org-shoplist-shoplist-insert (as-format)
   "Insert a shoplist with given format(‘AS-FORMAT’)."
   (save-excursion
-    (funcall 'org-mode)
+    (funcall #'org-mode)
     (insert as-format)
     (goto-char (point-min))
     (when (org-at-table-p) (org-table-align))))
@@ -431,7 +430,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   (save-excursion
     (goto-char (point-min))
     (when (not (looking-at-p "#\\+SEQ_TODO:")) )
-    (funcall 'org-mode)))
+    (funcall #'org-mode)))
 
 (defun org-shoplist-unmark-all ()
   "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
