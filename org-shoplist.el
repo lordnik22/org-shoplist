@@ -21,67 +21,61 @@
 (require 'calendar)
 (eval-when-compile (require 'cl))
 
+(defgroup org-shoplist  nil
+  "All customizable variables to generate your personal shoplist."
+  :prefix "org-shoplist--"
+  :group 'org-shoplist)
+
 (defcustom org-shoplist-buffer-name "*Shopping List*"
   "Name of buffer when generating a shopping list."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defcustom org-shoplist-keyword "TOBUY"
   "Keyword to mark recies for shopping."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defcustom org-shoplist-factor-property-name "FACTOR"
   "The default name for the factor-property of headers."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defcustom org-shoplist-table-header (list "Ingredient" "Amount")
   "Defines the header of the standard ingredient header."
-  :type '(repeat string)
-  :group 'shoplist)
+  :type '(repeat string))
 
 (defcustom org-shoplist-additional-units nil
   "Additional units that are needed for recipes with special units.
 Beaware that the unit can't contain dots."
   :type '(repeat (list (symbol)
 		       (string :tag "Definition")
-		       (string :tag "Description")))
-  :group 'org-shoplist)
+		       (string :tag "Description"))))
 
 (defcustom org-shoplist-explicit-keyword nil
   "When non-nil, only striclty include ingredients of marked headings.
 Meaning: When for example a level-1-header is marked, the
 ingredients defined in subheadings which aren’t marked don’t get
 included in the shoplist."
-  :type 'boolean
-  :group 'org-shoplist)
+  :type 'boolean)
 
 (defcustom org-shoplist-aggregate t
   "When non-nil will aggregate the ingredient of the generated shoplist.
 When nil won’t aggregate."
-  :type 'boolean
-  :group 'org-shoplist)
+  :type 'boolean)
 
 (defcustom org-shoplist-ing-start-char "("
   "Start char which introduces a ingredient."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defcustom org-shoplist-ing-end-char ")"
   "End char which terminats a ingredient."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defcustom org-shoplist-default-format 'org-shoplist-shoplist-as-table
   "Function name with one parameter which formats the shoplist."
-  :type 'symbol
-  :group 'org-shoplist)
+  :type 'symbol)
 
 (defcustom org-shoplist-ing-default-separator " "
   "Default separator for a ing parts."
-  :type 'string
-  :group 'org-shoplist)
+  :type 'string)
 
 (defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string.")
