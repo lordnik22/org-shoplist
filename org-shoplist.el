@@ -130,7 +130,7 @@ When ‘AMOUNT’ nil, return nil"
 	(user-error "Invalid ‘AMOUNT’(%s) for ingredient" amount))
       (when (string= "0" e-str) (setq e-str (concat e-str (calc-eval (math-extract-units (math-read-expr str))))))
       (when (> 0 (string-to-number (substring e-str 0 1))) (setq e-str (concat "1" e-str )))
-      (when (string-match "\\(\\.\\)[^0-9]" e-str) (setq e-str (replace-match "" t t e-str 1)))
+      (when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
       (apply #'concat
 	     (split-string
 	      (concat (math-round (calc-eval (math-remove-units (math-read-expr e-str))))
