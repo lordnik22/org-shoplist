@@ -23,7 +23,7 @@
 
 (defgroup org-shoplist  nil
   "All customizable variables to generate your personal shoplist."
-  :prefix "org-shoplist--"
+  :prefix "org-shoplist-"
   :group 'org-shoplist)
 
 (defcustom org-shoplist-buffer-name "*Shopping List*"
