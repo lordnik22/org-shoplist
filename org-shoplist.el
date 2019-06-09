@@ -4,14 +4,18 @@
 
 ;; Author: lordnik22
 ;; Version: 1.0.0
-;; Keywords: org-mode, shopping-list, eating-plan, recipe-list
+;; Keywords: extensions matching
 ;; URL: https://github.com/lordnik22
+;; Package-Requires: ((emacs "25"))
 
 ;; This program is distributed in the hope that it will be useful,
 ;; but WITHOUT ANY WARRANTY; without even the implied warranty of
 ;; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ;; GNU General Public License for more details.
 ;;; Commentary:
+;; An extension to Emacs for operating on org-files who provide
+;; food-recipes.  It's meant to generate shopping lists and make
+;; eating-plans.  (We talk about delicious food — nothing technical).
 ;;; Code:
 (require 'subr-x)
 (require 'seq)
@@ -19,7 +23,7 @@
 (require 'calc-units)
 (require 'org)
 (require 'calendar)
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 
 (defgroup org-shoplist  nil
   "All customizable variables to generate your personal shoplist."
@@ -111,7 +115,7 @@ When nil won’t aggregate."
   "Match an ingredient.")
 
 ;; Inject custom units
-(when (not (eq nil org-shoplist-additional-units))
+(unless (eq nil org-shoplist-additional-units)
   (eval-after-load "calc-units" #'(dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))))
 
 (defun org-shoplist--ing-find-unit-group (amount)
@@ -134,9 +138,8 @@ When ‘AMOUNT’ nil, return nil"
       (apply #'concat
 	     (split-string
 	      (concat (math-round (calc-eval (math-remove-units (math-read-expr e-str))))
-		      (when-let ((unit (calc-eval (math-extract-units (math-read-expr e-str))))
-				 (ex (not (string= "1" unit))))
-			unit))))))
+		      (let ((unit (calc-eval (math-extract-units (math-read-expr e-str)))))
+			(unless (string= "1" unit) unit)))))))
   (let ((math-backup math-simplifying-units))
     (unwind-protect
 	(progn
@@ -179,7 +182,7 @@ When ‘AMOUNT’ nil, return nil"
 ‘SEPARATOR’ a string by which ‘NAME’ and ‘AMOUNT’ is separated.
 If one constraint gets disregarded throw error."
   (save-match-data
-    (when (not (stringp name)) (user-error "Invalid ‘NAME’(%S) for ingredient" name))
+    (unless (stringp name) (user-error "Invalid ‘NAME’(%S) for ingredient" name))
     (let ((transform-amount (org-shoplist-ing--transform-amount amount)))
       (list name
 	    transform-amount
@@ -195,9 +198,9 @@ If one constraint gets disregarded throw error."
 				       ((listp x) (org-shoplist-ing-amount x))
 				       (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
 			       amounts "+")))
-    (if-let ((t-sum-amount (ignore-errors (org-shoplist-ing--transform-amount sum-amount))))
-	t-sum-amount
-      (user-error "Incompatible units while aggregating(%S)" amounts))))
+    (let ((t-sum-amount (ignore-errors (org-shoplist-ing--transform-amount sum-amount))))
+      (unless t-sum-amount (user-error "Incompatible units while aggregating(%S)" amounts))
+      t-sum-amount)))
 
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
@@ -257,7 +260,7 @@ Whenn ‘STR’ is nil read line where point is at."
 			     (match-string 0 nl)))
 	  (concat ing-start ing-end)))))
   (when (eq str nil) (setq str (thing-at-point 'line)))
-  (when (not (or (eq nil str) (string= str "")))
+  (unless (or (eq nil str) (string= str ""))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
       (when-let ((breaked-ing (save-excursion (org-shoplist--concat-when-broken (if (eq nil read-ings) 0 (match-end 0))))))
 	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
@@ -295,7 +298,7 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
 
 (defun org-shoplist--recipe-read-factor ()
   "Read the value of ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ in recipe where point is at."
-  (when (not (ignore-errors (org-back-to-heading t)))
+  (unless (ignore-errors (org-back-to-heading t))
     (user-error "Not in recipe"))
   (let ((v (ignore-errors
 	     (string-to-number
@@ -313,7 +316,7 @@ ingredient.
 See ‘org-shoplist-recipe-create’ for more details on creating general
 recipes."
   (save-match-data
-    (when (not (looking-at org-heading-regexp)) (user-error "Not at beginning of recipe"))
+    (unless (looking-at org-heading-regexp) (user-error "Not at beginning of recipe"))
     (let ((read-ings
 	   (save-match-data
 	     (let ((ing-list nil)
@@ -423,7 +426,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   (interactive)
   (save-excursion
     (goto-char (point-min))
-    (when (not (looking-at-p "#\\+SEQ_TODO:")) )
+    (unless (looking-at-p "#\\+SEQ_TODO:") )
     (funcall #'org-mode)))
 
 (defun org-shoplist-unmark-all ()
