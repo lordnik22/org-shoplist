@@ -231,7 +231,7 @@ Für die Sauce brauchen wir:
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (setq org-shoplist-explicit-keyword nil)
-     (insert-file-contents "./test/file/recipe-with-100-ing.org")
+     (insert-file-contents "./file/recipe-with-100-ing.org")
      (goto-char (point-min))
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))
@@ -484,5 +484,155 @@ Nuts)")))
   :" org-shoplist-factor-property-name ":   2
   :END:
 - (2 Orange)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-non-marked-header-one-ing-each-exlicity-nil ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+** other Test-Header
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword nil)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+** other Test-Header
+- (200g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-marked-header-one-ing-each-explicity-nil ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+** " org-shoplist-keyword " other Test-Header
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword nil)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+** " org-shoplist-keyword " other Test-Header
+- (200g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-marked-header-one-ing-each-explicity-t ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+** " org-shoplist-keyword " other Test-Header
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword t)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+** " org-shoplist-keyword " other Test-Header
+- (200g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-non-marked-header-one-ing-each-exlicity-t ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+** other Test-Header
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword nil)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+** other Test-Header
+- (200g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-two-header-only-factor-one ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+* other Test-Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword nil)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+* other Test-Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")))
+     (should (= (point) (point-min))))))
+
+(ert-deftest org-shoplist-test/factor-up-1-2-nested-header-with-factor-prop ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)
+* other Test-Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")
+     (goto-char (point-min))
+     (setq org-shoplist-explicit-keyword nil)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat"* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   2
+  :END:
+- (200g Nuts)
+** other Test-Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")))
      (should (= (point) (point-min))))))
 ;;; org-shoplist-recipe-test.el ends here

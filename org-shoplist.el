@@ -1,6 +1,6 @@
 ;;; org-shoplist.el --- Eat the world -*- lexical-binding: t -*-
 
-;; Copyright (C) 2019 Free Software Foundation, Inc.
+;; Copyright (C) 2019 lordnik22
 
 ;; Author: lordnik22
 ;; Version: 1.0.0
@@ -84,21 +84,24 @@ When nil won’t aggregate."
 (defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
   "Match a unit in a string.")
 
-(defconst org-shoplist-ing-amount-regex "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
+(defconst org-shoplist-ing-amount-regex
+  "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
   "Match an amount in a string in a exact fashion.")
 
-(defconst org-shoplist--ing-first-part-regex '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
-					  (regexp-quote org-shoplist-ing-start-char)
-					  (regexp-quote org-shoplist-ing-end-char)
-					  (regexp-quote org-shoplist-ing-start-char)
-					  (regexp-quote org-shoplist-ing-end-char))
+(defconst org-shoplist--ing-first-part-regex
+  '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
+	   (regexp-quote org-shoplist-ing-start-char)
+	   (regexp-quote org-shoplist-ing-end-char)
+	   (regexp-quote org-shoplist-ing-start-char)
+	   (regexp-quote org-shoplist-ing-end-char))
   "A regex which matches first part of ingredient the amount.")
 
-(defconst org-shoplist--ing-second-part-regex '(format "\\([^[:space:]%s%s]?[^%s%s]+?\\)"
-					   (regexp-quote org-shoplist-ing-start-char)
-					   (regexp-quote org-shoplist-ing-end-char)
-					   (regexp-quote org-shoplist-ing-start-char)
-					   (regexp-quote org-shoplist-ing-end-char))
+(defconst org-shoplist--ing-second-part-regex
+  '(format "\\([^[:space:]%s%s]?[^%s%s]+?\\)"
+	   (regexp-quote org-shoplist-ing-start-char)
+	   (regexp-quote org-shoplist-ing-end-char)
+	   (regexp-quote org-shoplist-ing-start-char)
+	   (regexp-quote org-shoplist-ing-end-char))
   "A regex which matches second part of the ingredient the name.")
 
 (defconst org-shoplist--ing-content-spliter-regex "\\([[:space:]]+\\)"
@@ -107,11 +110,12 @@ When nil won’t aggregate."
 (defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]*\\)"
   "A regex which matches whitespace which splits the date of ingredient.")
 
-(defconst org-shoplist-ing-regex '(concat (regexp-quote org-shoplist-ing-start-char)
-			      (eval org-shoplist--ing-first-part-regex)
-			      (eval org-shoplist--ing-content-spliter-regex)
-			      (eval org-shoplist--ing-second-part-regex)
-			      (regexp-quote org-shoplist-ing-end-char))
+(defconst org-shoplist-ing-regex
+  '(concat (regexp-quote org-shoplist-ing-start-char)
+	   (eval org-shoplist--ing-first-part-regex)
+	   (eval org-shoplist--ing-content-spliter-regex)
+	   (eval org-shoplist--ing-second-part-regex)
+	   (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
 ;; Inject custom units
@@ -216,10 +220,12 @@ Return new ingredient with modified amount."
   (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x))) ings))
 	(aggregate-ings (list)))
     (while (not (eq nil (car group-ings)))
-      (setq aggregate-ings (cons (org-shoplist-ing-create (apply #'org-shoplist-ing-+ (cdr (car group-ings)))
-					      (org-shoplist-ing-name (car (car group-ings)))
-					      (org-shoplist-ing-separator (car (car group-ings))))
-				 aggregate-ings))
+      (setq aggregate-ings
+	    (cons (org-shoplist-ing-create
+		   (apply #'org-shoplist-ing-+ (cdr (car group-ings)))
+		   (org-shoplist-ing-name (car (car group-ings)))
+		   (org-shoplist-ing-separator (car (car group-ings))))
+		  aggregate-ings))
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
 
@@ -332,8 +338,9 @@ recipes."
 		   (setq ing-list (append ing-list (org-shoplist-ing-read))))
 		 (beginning-of-line 2))
 	       ing-list))))
-      (org-shoplist-recipe-create (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
-		      (if aggregate (apply #'org-shoplist-ing-aggregate read-ings) read-ings)))))
+      (org-shoplist-recipe-create
+       (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
+       (if aggregate (apply #'org-shoplist-ing-aggregate read-ings) read-ings)))))
 
 (defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
@@ -344,7 +351,8 @@ recipes."
     (list (calendar-current-date)
 	  recipes
 	  (reverse (apply #'org-shoplist-ing-aggregate
-			  (apply #'append (mapcar #'org-shoplist-recipe-get-all-ing recipes)))))))
+			  (apply #'append
+				 (mapcar #'org-shoplist-recipe-get-all-ing recipes)))))))
 
 (defun org-shoplist-shoplist-creation-date (shoplist)
   "Get shopdate of shoplist.
@@ -413,7 +421,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 
 (defun org-shoplist (formatter)
   "Generate a shoplist from current buffer with ‘FORMATTER’."
-  (interactive "aFormatter-Name: ")
+  (interactive (concat "aFormatter-Name(" org-shoplist-default-format "): "))
   (let ((sl (with-current-buffer (current-buffer)
 	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword)))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
@@ -471,6 +479,11 @@ When there is no value, set value as inital value."
   "Increment the factor-property of current header."
   (interactive)
   (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1+ (org-shoplist--recipe-read-factor))))))
+
+(defun org-shoplist-overview ()
+  "An overview of the current recipes you added."
+  (interactive)
+  (org-search-view t org-shoplist-keyword))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
