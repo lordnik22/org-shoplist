@@ -85,7 +85,12 @@ When nil won’t aggregate."
   "Match a unit in a string.")
 
 (defconst org-shoplist-ing-amount-regex
-  "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?\\([0-9]*\\(\\.\\|e-\\)\\)?[0-9]+[.]?[ ]?\\([^-+*\\\n .()]*\\)\\)"
+  (concat "\\("
+	  "\\(\\([0-9]+\\(\\.\\|e-\\)\\)?"
+	  "\\([0-9]*\\(\\.\\|e-\\)\\)?"
+	  "[0-9]+[.]?[ ]?"
+	  "\\([^-+*\\\n .()]*\\)"
+	  "\\)")
   "Match an amount in a string in a exact fashion.")
 
 (defconst org-shoplist--ing-first-part-regex
@@ -118,18 +123,15 @@ When nil won’t aggregate."
 	   (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
-;; Inject custom units
-(unless (null org-shoplist-additional-units)
-  (eval-after-load "calc-units" #'(dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))))
-
 (defun org-shoplist--ing-find-unit-group (amount)
   "Find the ground unit of ‘AMOUNT’s unit.
 When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
+(declare-function org-shoplist--calc-eval "org-shoplsit.el")
 (defun org-shoplist-ing--transform-amount (amount)
   "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
-  (defun org-shoplist--calc-eval (str &optional separator &rest args)
+  (defsubst org-shoplist--calc-eval (str &optional separator &rest args)
     "Pass ‘STR’, ‘SEPARATOR’ and ‘ARGS’ to (calc-eval) than check if it is valid."
     (when (null str) (setq str "0"))
     (let ((e-str (save-match-data (ignore-errors (eval (calc-eval str separator args))))))
@@ -144,12 +146,15 @@ When ‘AMOUNT’ nil, return nil"
 	      (concat (math-round (calc-eval (math-remove-units (math-read-expr e-str))))
 		      (let ((unit (calc-eval (math-extract-units (math-read-expr e-str)))))
 			(unless (string= "1" unit) unit)))))))
-  (let ((math-backup math-simplifying-units))
+  (let ((math-backup math-simplifying-units)
+	(unit-backup math-additional-units))
     (unwind-protect
 	(progn
 	  (setq math-simplifying-units t)
+	  (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
 	  (org-shoplist--calc-eval amount))
-      (setq math-simplifying-units math-backup))))
+      (setq math-simplifying-units math-backup)
+      (setq math-additional-units unit-backup))))
 
 (defun org-shoplist-ing-name (ing)
   "Get name of ‘ING’."
@@ -209,7 +214,7 @@ If one constraint gets disregarded throw error."
 (defun org-shoplist-ing-* (ing factor)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
 Return new ingredient with modified amount."
-  (if (= factor 0) nil
+  (unless (zerop factor)
     (org-shoplist-ing-create
      (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing))
      (org-shoplist-ing-name ing)
@@ -229,10 +234,12 @@ Return new ingredient with modified amount."
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
 
+(declare-function org-shoplist--ing-read-loop "org-shoplist.el")
+(declare-function org-shoplist--concat-when-broken "org-shoplist.el")
 (defun org-shoplist-ing-read (&optional aggregate str)
   "‘AGGREGATE’ output when non-nil else return parsed ‘STR’ raw.
 Whenn ‘STR’ is nil read line where point is at."
-  (defun org-shoplist--ing-read-loop (str start-pos ings)
+  (defsubst org-shoplist--ing-read-loop (str start-pos ings)
     "Helper functions for (org-shoplist-read) which does the recursive matching.
 ‘STR’ is a string where regex is getting matched against.
 ‘START-POS’ is where in string should start.
@@ -248,20 +255,13 @@ Whenn ‘STR’ is nil read line where point is at."
 	       ings))
 
       ings))
-  (defun org-shoplist--concat-when-broken (last-pos)
+  (defsubst org-shoplist--concat-when-broken (last-pos)
     "Concat broken ing when it’s splitted into two by newline."
-    (when-let (ing-start
-	       (when (string-match
-		      (concat (regexp-quote org-shoplist-ing-start-char) (eval org-shoplist--ing-first-part-regex) (eval org-shoplist--ing-content-spliter-regex) "$")
-		      str
-		      last-pos)
-		 (match-string 0 str)))
-      (let ((nl (save-excursion (beginning-of-line 2)
-		  (thing-at-point 'line))))
-	(when-let (ing-end (when (string-match (concat "^" (eval org-shoplist--ing-optional-content-spliter-regex) (eval org-shoplist--ing-second-part-regex) (regexp-quote org-shoplist-ing-end-char))
-					       nl)
-			     (match-string 0 nl)))
-	  (concat ing-start ing-end)))))
+    (when (string-match (concat (regexp-quote org-shoplist-ing-start-char) (eval org-shoplist--ing-first-part-regex) (eval org-shoplist--ing-content-spliter-regex) "$") str last-pos)
+      (let ((ing-start (match-string 0 str))
+	    (nl (save-excursion (beginning-of-line 2) (thing-at-point 'line))))
+	(when (string-match (concat "^" (eval org-shoplist--ing-optional-content-spliter-regex) (eval org-shoplist--ing-second-part-regex) (regexp-quote org-shoplist-ing-end-char)) nl)
+	    (concat ing-start (match-string 0 nl))))))
   (unless str (setq str (thing-at-point 'line)))
   (unless (or (null str) (string= str ""))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
@@ -448,8 +448,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 When there is no value, set value as inital value."
   (interactive "NValue: " )
   (let ((old-factor (org-shoplist--recipe-read-factor)))
-    (when (null new-factor) (user-error "No inital value for %s defined"
-					  org-shoplist-factor-property-name))
+    (when (null new-factor) (user-error "No inital value for %s defined" org-shoplist-factor-property-name))
     (when (< new-factor 1) (user-error "Can’t decrement under 1"))
     (when old-factor
       (let* ((current-recipe (save-excursion (org-shoplist-recipe-read)))
