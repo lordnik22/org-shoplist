@@ -25,7 +25,7 @@
 (require 'calendar)
 (require 'cl-lib)
 
-(defgroup org-shoplist  nil
+(defgroup org-shoplist nil
   "All customizable variables to generate your personal shoplist."
   :prefix "org-shoplist-"
   :group 'org-shoplist)
@@ -73,9 +73,9 @@ When nil won’t aggregate."
   "End char which terminats a ingredient."
   :type 'string)
 
-(defcustom org-shoplist-default-format 'org-shoplist-shoplist-as-table
+(defcustom org-shoplist-default-format #'org-shoplist-shoplist-as-table
   "Function name with one parameter which formats the shoplist."
-  :type 'symbol)
+  :type 'function)
 
 (defcustom org-shoplist-ing-default-separator " "
   "Default separator for a ing parts."
@@ -128,7 +128,7 @@ When nil won’t aggregate."
 When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
-(declare-function org-shoplist--calc-eval "org-shoplsit.el")
+(declare-function org-shoplist--calc-eval "org-shoplist.el")
 (defun org-shoplist-ing--transform-amount (amount)
   "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
   (defsubst org-shoplist--calc-eval (str &optional separator &rest args)
