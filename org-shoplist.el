@@ -416,14 +416,21 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
     (goto-char (point-min))
     (when (org-at-table-p) (org-table-align))))
 
-(defun org-shoplist (formatter)
-  "Generate a shoplist from current buffer with ‘FORMATTER’."
-  (interactive (concat "aFormatter-Name(" org-shoplist-default-format "): "))
-  (let ((sl (with-current-buffer (current-buffer)
-	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword)))))
+(defun org-shoplist (&optional arg)
+  "Generate a shoplist from current buffer.
+With a non-default prefix argument ARG, prompt the user for a
+formatter; otherwise, just use `org-shoplist-default-format'."
+  (interactive "p")
+  (let ((formatter (if (= arg 1)
+                       org-shoplist-default-format
+                     (completing-read "Formatter-Name: " obarray 'functionp t
+                                      nil nil "org-shoplist-default-format")))
+        (sl (save-excursion
+              (goto-char (point-min))
+              (org-shoplist-shoplist-read org-shoplist-aggregate
+                                          org-shoplist-explicit-keyword))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
-      (when (eq formatter '##) (setq formatter org-shoplist-default-format))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
 (defun org-shoplist-init ()
