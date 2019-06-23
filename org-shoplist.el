@@ -265,7 +265,7 @@ Whenn ‘STR’ is nil read line where point is at."
   (unless str (setq str (thing-at-point 'line)))
   (unless (or (null str) (string= str ""))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
-      (when-let ((breaked-ing (org-shoplist--concat-when-broken (if (eq nil read-ings) 0 (match-end 0)))))
+      (when-let ((breaked-ing (org-shoplist--concat-when-broken (if (null read-ings) 0 (match-end 0)))))
 	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
       (if aggregate
 	  (apply #'org-shoplist-ing-aggregate read-ings)
