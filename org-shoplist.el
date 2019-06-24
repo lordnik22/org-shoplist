@@ -25,7 +25,7 @@
 (require 'calendar)
 (require 'cl-lib)
 
-(defgroup org-shoplist  nil
+(defgroup org-shoplist nil
   "All customizable variables to generate your personal shoplist."
   :prefix "org-shoplist-"
   :group 'org-shoplist)
@@ -73,9 +73,9 @@ When nil won’t aggregate."
   "End char which terminats a ingredient."
   :type 'string)
 
-(defcustom org-shoplist-default-format 'org-shoplist-shoplist-as-table
+(defcustom org-shoplist-default-format #'org-shoplist-shoplist-as-table
   "Function name with one parameter which formats the shoplist."
-  :type 'symbol)
+  :type 'function)
 
 (defcustom org-shoplist-ing-default-separator " "
   "Default separator for a ing parts."
@@ -128,7 +128,7 @@ When nil won’t aggregate."
 When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
-(declare-function org-shoplist--calc-eval "org-shoplsit.el")
+(declare-function org-shoplist--calc-eval "org-shoplist.el")
 (defun org-shoplist-ing--transform-amount (amount)
   "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
   (defsubst org-shoplist--calc-eval (str &optional separator &rest args)
@@ -265,7 +265,7 @@ Whenn ‘STR’ is nil read line where point is at."
   (unless str (setq str (thing-at-point 'line)))
   (unless (or (null str) (string= str ""))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
-      (when-let ((breaked-ing (org-shoplist--concat-when-broken (if (eq nil read-ings) 0 (match-end 0)))))
+      (when-let ((breaked-ing (org-shoplist--concat-when-broken (if (null read-ings) 0 (match-end 0)))))
 	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
       (if aggregate
 	  (apply #'org-shoplist-ing-aggregate read-ings)
@@ -416,14 +416,20 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
     (goto-char (point-min))
     (when (org-at-table-p) (org-table-align))))
 
-(defun org-shoplist (formatter)
-  "Generate a shoplist from current buffer with ‘FORMATTER’."
-  (interactive (concat "aFormatter-Name(" org-shoplist-default-format "): "))
-  (let ((sl (with-current-buffer (current-buffer)
-	      (save-excursion (goto-char (point-min)) (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword)))))
+(defun org-shoplist (&optional arg)
+  "Generate a shoplist from current buffer.
+With a non-default prefix argument ARG, prompt the user for a
+formatter; otherwise, just use `org-shoplist-default-format'."
+  (interactive "p")
+  (let ((formatter (if (= arg 1)
+                       org-shoplist-default-format
+                     (intern (completing-read "Formatter-Name: " obarray 'functionp t
+					      nil nil "org-shoplist-default-format"))))
+        (sl (save-excursion
+              (goto-char (point-min))
+              (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
-      (when (eq formatter '##) (setq formatter org-shoplist-default-format))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
 (defun org-shoplist-init ()
