@@ -423,12 +423,11 @@ formatter; otherwise, just use `org-shoplist-default-format'."
   (interactive "p")
   (let ((formatter (if (= arg 1)
                        org-shoplist-default-format
-                     (completing-read "Formatter-Name: " obarray 'functionp t
-                                      nil nil "org-shoplist-default-format")))
+                     (intern (completing-read "Formatter-Name: " obarray 'functionp t
+					      nil nil "org-shoplist-default-format"))))
         (sl (save-excursion
               (goto-char (point-min))
-              (org-shoplist-shoplist-read org-shoplist-aggregate
-                                          org-shoplist-explicit-keyword))))
+              (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
