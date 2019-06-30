@@ -231,7 +231,7 @@ Für die Sauce brauchen wir:
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (setq org-shoplist-explicit-keyword nil)
-     (insert-file-contents "./file/recipe-with-100-ing.org")
+     (insert-file-contents "./test/file/recipe-with-100-ing.org")
      (goto-char (point-min))
      (should (equal (list "Recipe 1"
 			  (list (org-shoplist-ing-create "100g" "Nuts")))

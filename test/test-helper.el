@@ -17,7 +17,6 @@
 (defvar org-shoplist-test-backup-vars
   (list (cons org-shoplist-keyword 'org-shoplist-keyword)
 	(cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
-	(cons org-shoplist-ing-amount-regex 'org-shoplist-ing-amount-regex)
 	(cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
 	(cons org-shoplist-additional-units 'org-shoplist-additional-units)
 	(cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
