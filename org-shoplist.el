@@ -81,9 +81,6 @@ When nil won’t aggregate."
   "Default separator for a ing parts."
   :type 'string)
 
-(defconst org-shoplist-ing-unit-regex "\\([^0-9 ]+\\)"
-  "Match a unit in a string.")
-
 (defconst org-shoplist--ing-first-part-regex
   '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
 	   (regexp-quote org-shoplist-ing-start-char)
@@ -114,36 +111,48 @@ When nil won’t aggregate."
 	   (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
-(defun org-shoplist--ing-find-unit-group (amount)
+
+(defun org-shoplist--calc-unit (amount)
+  "Get the unit from AMOUNT by suppling it to calc.
+AMOUNT is handled as a string.
+When AMOUNT has no unit return nil."
+  (let ((unit (calc-eval (math-extract-units (math-read-expr amount)))))
+    (unless (string= "1" unit) unit)))
+
+(defun org-shoplist--calc-unit-group (amount)
   "Find the ground unit of ‘AMOUNT’s unit.
 When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
-(defun org-shoplist--calc-eval (str &optional separator &rest args)
-  "Pass ‘STR’, ‘SEPARATOR’ and ‘ARGS’ to (calc-eval) than check if it is valid."
+(defun org-shoplist--calc-eval (str round-func &optional separator &rest args)
+  "Calc-eval ‘STR’ and apply ‘ROUND-FUNC’ to the final result.
+Optional ‘SEPARATOR’ and ‘ARGS’ are supplied to (calc-eval)."
   (unless str (setq str "0"))
   (let ((e-str (save-match-data (ignore-errors (eval (calc-eval str separator args))))))
     (when (or (null e-str)
 	      (string-match "[<>+*/-]" e-str))
       (user-error "Invalid ‘AMOUNT’(%s) for ingredient" str))
-    (when (string= "0" e-str) (setq e-str (concat e-str (calc-eval (math-extract-units (math-read-expr str))))))
-    (when (> 0 (string-to-number (substring e-str 0 1))) (setq e-str (concat "1" e-str )))
+    (when (string= "0" e-str) (setq e-str (concat e-str (org-shoplist--calc-unit str))))
+    (when (> 0 (string-to-number (substring e-str 0 1))) (setq e-str (concat "1" e-str)))
     (when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
     (apply #'concat
 	   (split-string
-	    (concat (math-round (calc-eval (math-remove-units (math-read-expr e-str))))
+	    (concat (number-to-string (funcall round-func (string-to-number (calc-eval (math-remove-units (math-read-expr e-str))))))
 		    (let ((unit (calc-eval (math-extract-units (math-read-expr e-str)))))
 		      (unless (string= "1" unit) unit)))))))
 
-(defun org-shoplist--ing-transform-amount (amount)
-  "Transform ‘AMOUNT’ to a valid form when possible else throw an error."
+(defun org-shoplist--ing-transform-amount (amount &optional round-func)
+  "Transform ‘AMOUNT’ to a valid form when possible else throw an error.
+Optional ‘ROUND-FUNC’ is a function which is applied to the
+result to round it.  Default is math-round."
   (let ((math-backup math-simplifying-units)
-	(unit-backup math-additional-units))
+	(unit-backup math-additional-units)
+	(str-amount (if (numberp amount) (number-to-string amount) amount)))
     (unwind-protect
 	(progn
 	  (setq math-simplifying-units t)
 	  (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
-	  (org-shoplist--calc-eval amount))
+	  (org-shoplist--calc-eval str-amount (if (null round-func) 'math-round round-func)))
       (setq math-simplifying-units math-backup)
       (setq math-additional-units unit-backup))))
 
@@ -153,22 +162,19 @@ When ‘AMOUNT’ nil, return nil"
 
 (defun org-shoplist-ing-amount (ing)
   "Get amount of ‘ING’."
-  (car (cdr ing)))
+  (cadr ing))
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of ‘ING’."
-  (let ((amount (org-shoplist-ing-amount ing)))
-    (if (string-match org-shoplist-ing-unit-regex amount)
-	(match-string 1 amount)
-      nil)))
+  (org-shoplist--calc-unit (org-shoplist-ing-amount ing)))
 
 (defun org-shoplist-ing-group (ing)
   "Get group of ‘ING’."
-  (car (cdr (cdr ing))))
+  (caddr ing))
 
 (defun org-shoplist-ing-separator (ing)
   "Get separator of ‘ING’."
-  (car (cdr (cdr (cdr ing)))))
+  (cadddr ing))
 
 (defun org-shoplist-ing-string (ing)
   "Return ‘ING’ as follow: “(amount name)”.
@@ -186,30 +192,32 @@ If one constraint gets disregarded throw error."
     (let ((transform-amount (org-shoplist--ing-transform-amount amount)))
       (list name
 	    transform-amount
-	    (org-shoplist--ing-find-unit-group transform-amount)
+	    (org-shoplist--calc-unit-group transform-amount)
 	    (if (null separator) org-shoplist-ing-default-separator separator)))))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
-  (let ((sum-amount (mapconcat (lambda (x)
-				 (cond ((stringp x) x)
-				       ((integerp x) (number-to-string x))
-				       ((null x) "0")
-				       ((listp x) (org-shoplist-ing-amount x))
-				       (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
-			       amounts "+")))
+  (let ((sum-amount
+	 (mapconcat
+	  (lambda (x)
+	    (cond ((stringp x) x)
+		  ((integerp x) (number-to-string x))
+		  ((null x) "0")
+		  ((listp x) (org-shoplist-ing-amount x))
+		  (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
+	  amounts "+")))
     (let ((t-sum-amount (ignore-errors (org-shoplist--ing-transform-amount sum-amount))))
       (unless t-sum-amount (user-error "Incompatible units while aggregating(%S)" amounts))
       t-sum-amount)))
 
-(defun org-shoplist-ing-* (ing factor)
+(defun org-shoplist-ing-* (ing factor &optional round-func)
   "Multiply the amount of ‘ING’ with given ‘FACTOR’.
-Return new ingredient with modified amount."
-  (unless (zerop factor)
-    (org-shoplist-ing-create
-     (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing))
-     (org-shoplist-ing-name ing)
-     (org-shoplist-ing-separator ing))))
+Return new ingredient with modified amount.  When ‘ROUND-FUNC’
+given round resulting amount with it."
+  (org-shoplist-ing-create
+   (org-shoplist--ing-transform-amount (concat (number-to-string factor) "*" (org-shoplist-ing-amount ing)) round-func)
+   (org-shoplist-ing-name ing)
+   (org-shoplist-ing-separator ing)))
 
 (defun org-shoplist-ing-aggregate (&rest ings)
   "Aggregate ‘INGS’."
@@ -285,13 +293,14 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
   "Get all ingredients of ‘RECIPE’."
   (car (cdr recipe)))
 
-(defun org-shoplist-recipe-* (recipe factor)
-  "Multiply all ingredients of ‘RECIPE’ by given ‘FACTOR’."
+(defun org-shoplist-recipe-* (recipe factor &optional round-func)
+  "Multiply all ingredients of ‘RECIPE’ by given ‘FACTOR’.
+When ROUND-FUNC given round resulting amounts with it."
   (if (null factor)
       recipe
     (let (f-ing-list)
       (dolist (i (org-shoplist-recipe-get-all-ing recipe) f-ing-list)
-	(push (org-shoplist-ing-* i factor) f-ing-list))
+	(push (org-shoplist-ing-* i factor round-func) f-ing-list))
       (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (reverse f-ing-list)))))
 
 (defun org-shoplist--recipe-read-factor ()
@@ -432,7 +441,7 @@ formatter; otherwise, just use `org-shoplist-default-format'."
     (funcall #'org-mode)))
 
 (defun org-shoplist-unmark-all ()
-  "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
+  "Unmark all recipes which are marked with ‘org-shoplist-keyword’."
   (interactive)
   (save-excursion
     (goto-char (point-min))
@@ -440,18 +449,23 @@ formatter; otherwise, just use `org-shoplist-default-format'."
     (while (re-search-forward (concat " " org-shoplist-keyword) nil t)
       (replace-match "" nil nil))))
 
-(defun org-shoplist-recipe-set-factor (new-factor)
+(defun org-shoplist-recipe-set-factor (new-factor &optional inclusivness)
   "Set ‘NEW-FACTOR’ as value of the factor-property of current header.
-When there is no value, set value as inital value."
+If already set, adjust ingredients accordingly else
+set value as inital value.
+‘INCLUSIVNESS’ defines how to handle nested headers."
   (interactive "NValue: " )
   (let ((old-factor (org-shoplist--recipe-read-factor)))
     (unless new-factor (user-error "No inital value for %s defined" org-shoplist-factor-property-name))
     (when (< new-factor 1) (user-error "Can’t decrement under 1"))
     (when old-factor
-      (let* ((current-recipe (save-excursion (org-shoplist-recipe-read)))
+      (let* ((current-recipe (save-excursion (org-shoplist-recipe-read nil inclusivness)))
 	     (new-recipe (org-shoplist-recipe-*
 			  current-recipe
-			  (ignore-errors (/ (float new-factor) old-factor)))))
+			  (ignore-errors (/ (float new-factor) old-factor))
+			  (if (< new-factor old-factor) 'ffloor 'fceiling ))))
+
+;;	(org-shoplist-recipe-create (org-shoplist-recipe-name new-recipe) (map 'list (lambda ()) (org-shoplist-recipe-get-all-ing)))
 	(unless new-recipe (user-error "No ingredients to apply factor"))
 	;; replace current with new
 	(save-excursion
@@ -463,15 +477,29 @@ When there is no value, set value as inital value."
 	   (org-shoplist-recipe-get-all-ing current-recipe)))))
     (org-set-property org-shoplist-factor-property-name (number-to-string new-factor))))
 
-(defun org-shoplist-recipe-factor-down ()
-  "Decrement the factor-property of current header and adjust ingredients amounts."
-  (interactive)
-  (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1- (org-shoplist--recipe-read-factor))))))
+(defun org-shoplist-recipe-factor-down (&optional arg)
+  "Decrement the factor-property of current header.
+With a non-default prefix argument ARG, apply
+‘org-shoplist-explicit-keyword’ to recipe-scan.  Meaning when
+‘org-shoplist-explicit-keyword’ is t, only factor down the
+ingredients of (nested) recipes which are marked."
+  (interactive "p")
+  (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1- (org-shoplist--recipe-read-factor)))
+				      (org-shoplist--when-arg-return-keyword-else-nil arg))))
 
-(defun org-shoplist-recipe-factor-up ()
-  "Increment the factor-property of current header."
-  (interactive)
-  (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1+ (org-shoplist--recipe-read-factor))))))
+(defun org-shoplist-recipe-factor-up (&optional arg)
+  "Increment the factor-property of current header.
+With a non-default prefix argument ARG, apply
+‘org-shoplist-explicit-keyword’ to recipe-scan.  Meaning when
+‘org-shoplist-explicit-keyword’ is t, only factor up the
+ingredients of (nested) recipes which are marked."
+  (interactive "p")
+  (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1+ (org-shoplist--recipe-read-factor)))
+				      (org-shoplist--when-arg-return-keyword-else-nil arg))))
+
+(defun org-shoplist--when-arg-return-keyword-else-nil (arg)
+  "When ARG equals 1 return nil else ‘org-shoplist-explicit-keyword’."
+  (when (and arg (= arg 1)) org-shoplist-explicit-keyword))
 
 (defun org-shoplist-overview ()
   "An overview of the current recipes you added."

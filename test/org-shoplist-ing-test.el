@@ -22,8 +22,9 @@
 
 (ert-deftest org-shoplist-test/transform-amount-valid-test ()
   "Test a weide range of diff amounts"
-  (should (string= "1" (org-shoplist--ing-transform-amount nil)))
-  (should (string= "1" (org-shoplist--ing-transform-amount "0")))
+  (should (string= "0" (org-shoplist--ing-transform-amount nil)))
+  (should (string= "0" (org-shoplist--ing-transform-amount 0)))
+  (should (string= "0" (org-shoplist--ing-transform-amount "0")))
   (should (string= "0g" (org-shoplist--ing-transform-amount "0g")))
   (should (string= "1" (org-shoplist--ing-transform-amount "1")))
   (should (string= "2" (org-shoplist--ing-transform-amount "2.0")))
@@ -310,35 +311,23 @@ Nuts)")
 		       (org-shoplist-ing-create "200g" "Nuts"))
 		 (org-shoplist-ing-read nil "((100g Nuts) (200g Nuts))"))))
 
-(ert-deftest org-shoplist-test/ing-multiply-ing-nil ()
-  "Return error when passing invalid ingredients."
-  (should (equal '(user-error "Invalid ‘NAME’(nil) for ingredient")
-		 (should-error (org-shoplist-ing-* nil 2)))))
+(ert-deftest org-shoplist-test/ing-* ()
+  "Test basic inputs to org-shoplist-ing-*."
+  (should (equal '(user-error "Invalid ‘AMOUNT’(2*) for ingredient")
+		 (should-error (org-shoplist-ing-* nil 2))))
+  (should (equal (org-shoplist-ing-create 0 "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create 100 "Nuts") 0)))
+  (should (equal (org-shoplist-ing-create "0g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 0)))
+  (should (equal (org-shoplist-ing-create "100g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1)))
+  (should (equal (org-shoplist-ing-create "200g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 2)))
+  (should (equal (org-shoplist-ing-create "150g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.5)))
+  (should (equal (org-shoplist-ing-create "134g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'fceiling)))
+  (should (equal (org-shoplist-ing-create "133g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'ffloor))))
 
-(ert-deftest org-shoplist-test/ing-multiply-by-0-with-out-unit ()
-  "Return nil when amount is 0."
-  (should (equal nil
-		 (org-shoplist-ing-* (org-shoplist-ing-create 100 "Nuts") 0))))
-
-(ert-deftest org-shoplist-test/ing-multiply-by-0-with-unit ()
-  "Return ing with amount 0g when multiplying by 0."
-  (should (equal nil
-		 (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 0))))
-
-(ert-deftest org-shoplist-test/ing-multiply-by-1 ()
-  "Return same ing when multiplying by 1."
-  (should (equal (org-shoplist-ing-create "100g" "Nuts")
-		 (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1))))
-
-(ert-deftest org-shoplist-test/ing-multiply-by-2 ()
-  "Return ing with amount dobbelt multiplying by 2."
-  (should (equal (org-shoplist-ing-create "200g" "Nuts")
-		 (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 2))))
 
 (ert-deftest org-shoplist-test/ing-+-nil ()
   "Add ing with nil return ing."
-  (let ((ing (org-shoplist-ing-amount (org-shoplist-ing-create 100 "Nuts"))))
-    (should (equal ing (org-shoplist-ing-+ ing nil)))))
+  (let ((ing (org-shoplist-ing-create "200g" "Nuts")))
+    (should (equal (org-shoplist-ing-amount ing) (org-shoplist-ing-+ (org-shoplist-ing-amount ing) nil)))))
 
 (ert-deftest org-shoplist-test/ing-+-0 ()
   "Add ing with 0 return ing."

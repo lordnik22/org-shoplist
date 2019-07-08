@@ -392,6 +392,53 @@ Salad) mahlen.")
      (should (equal '(user-error "No ingredients to apply factor")
 		    (should-error (org-shoplist-recipe-factor-up)))))))
 
+(ert-deftest org-shoplist-test/factor-up-five-times-600g-amount ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   6
+  :END:
+- (600g Nuts)"))))))
+
+(ert-deftest org-shoplist-test/factor-up-and-down-five-times-same-amount ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)"))))))
+
 (ert-deftest org-shoplist-test/factor-up-1-2-one-header-one-ingredient ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
@@ -535,7 +582,7 @@ Nuts)")))
 (ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-marked-header-one-ing-each-explicity-t ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert "* Test Header
+     (insert "* " org-shoplist-keyword " Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   1
   :END:
@@ -546,7 +593,7 @@ Nuts)")))
      (setq org-shoplist-explicit-keyword t)
      (org-shoplist-recipe-factor-up)
      (should (string= (buffer-string)
-		      (concat"* Test Header
+		      (concat"* " org-shoplist-keyword " Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
@@ -558,7 +605,7 @@ Nuts)")))
 (ert-deftest org-shoplist-test/factor-up-1-2-one-header-with-nested-non-marked-header-one-ing-each-exlicity-t ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (insert "* Test Header
+     (insert "* " org-shoplist-keyword " Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   1
   :END:
@@ -566,16 +613,16 @@ Nuts)")))
 ** other Test-Header
 - (100g Nuts)")
      (goto-char (point-min))
-     (setq org-shoplist-explicit-keyword nil)
-     (org-shoplist-recipe-factor-up)
+     (setq org-shoplist-explicit-keyword t)
+     (org-shoplist-recipe-factor-up 1)
      (should (string= (buffer-string)
-		      (concat"* Test Header
+		      (concat "* " org-shoplist-keyword " Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
 - (200g Nuts)
 ** other Test-Header
-- (200g Nuts)")))
+- (100g Nuts)")))
      (should (= (point) (point-min))))))
 
 (ert-deftest org-shoplist-test/factor-up-1-2-two-header-only-factor-one ()
@@ -615,7 +662,7 @@ Nuts)")))
   :" org-shoplist-factor-property-name ":   1
   :END:
 - (100g Nuts)
-* other Test-Header
+** other Test-Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   1
   :END:
@@ -624,15 +671,15 @@ Nuts)")))
      (setq org-shoplist-explicit-keyword nil)
      (org-shoplist-recipe-factor-up)
      (should (string= (buffer-string)
-		      (concat"* Test Header
+		      (concat "* Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   2
   :END:
 - (200g Nuts)
 ** other Test-Header
   :PROPERTIES:
-  :" org-shoplist-factor-property-name ":   1
+  :" org-shoplist-factor-property-name ":   2
   :END:
-- (100g Nuts)")))
+- (200g Nuts)")))
      (should (= (point) (point-min))))))
 ;;; org-shoplist-recipe-test.el ends here

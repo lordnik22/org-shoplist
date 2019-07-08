@@ -3,11 +3,17 @@ An extension to emacs for operating on org-files who provide
 food-recipes. It's meant to generate shopping lists and make
 eating-plans. (We talk about delicious food — nothing technical).
 ## Getting Started ##
-- Create a recipe list (See [Ingredients](#Ingredients) and [Recipes](#Recipes))
-- Set `org-shoplist-keyword` to the recipes which you want to buy
-- Press `M-x org-shoplist ENT ENT`
-- If you want a "TODO"-list choose as formatter:
-  `org-shoplist-shoplist-as-todo-list`
+
+### Installation ###
+- package-install ENT org-shoplist ENT
+Alternatively you can clone this project and add it to your load-path
+
+### Your first Shoplist ###
+- Create a new File
+- Add a recipe (See [Ingredients](#Ingredients)
+  and [Recipes](#Recipes)) for syntax
+- Mark your recipe for buying by setting `org-shoplist-keyword`
+- Press `M-x org-shoplist ENT`
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char`. Simple examples for ingredients: 
@@ -111,7 +117,7 @@ flakes and chocolate but without vanilla.
 * TOBUY Cream
 - (250g flakes)
 ** TOBUY with chocolate
-- (100g chocolate
+- (100g chocolate)
 ** with vanilla
 - (250ml vanilla)
 ```
