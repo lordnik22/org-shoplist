@@ -20,7 +20,7 @@ in your init-file:
 
 ## Contribution ##
 If you arise any problems or limitations which makes this package
-useless for you, please leave an issue with your concern.
+useless to you, please leave an issue with your concern.
 
 For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
 
