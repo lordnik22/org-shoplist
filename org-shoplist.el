@@ -65,6 +65,11 @@ included in the shoplist."
 When nil won’t aggregate."
   :type 'boolean)
 
+(defcustom org-shoplist-ing-invert nil
+  "When non-nil, handle ingredient name first, amount second.
+When nil, handle ingredient amount first, name second"
+  :type 'boolean)
+
 (defcustom org-shoplist-ing-start-char "("
   "Start char which introduces a ingredient."
   :type 'string)
@@ -80,6 +85,11 @@ When nil won’t aggregate."
 (defcustom org-shoplist-ing-default-separator " "
   "Default separator for a ing parts."
   :type 'string)
+
+(defcustom org-shoplist-auto-add-unit nil
+  "When non-nil add unknown units to ‘ORG-SHOPLIST-ADDITIONAL-UNITS’.
+Else throw an ‘user-error’."
+  :type 'boolean)
 
 (defconst org-shoplist--ing-first-part-regex
   '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
@@ -119,27 +129,27 @@ When AMOUNT has no unit return nil."
   (let ((unit (calc-eval (math-extract-units (math-read-expr amount)))))
     (unless (string= "1" unit) unit)))
 
-(defun org-shoplist--calc-unit-group (amount)
+(defun org-shoplist--calc-default-unit (amount)
   "Find the ground unit of ‘AMOUNT’s unit.
 When ‘AMOUNT’ nil, return nil"
   (calc-eval (math-extract-units (math-to-standard-units (math-read-expr amount) nil))))
 
 (defun org-shoplist--calc-eval (str round-func &optional separator &rest args)
   "Calc-eval ‘STR’ and apply ‘ROUND-FUNC’ to the final result.
-Optional ‘SEPARATOR’ and ‘ARGS’ are supplied to (calc-eval)."
-  (unless str (setq str "0"))
-  (let ((e-str (save-match-data (ignore-errors (eval (calc-eval str separator args))))))
-    (when (or (null e-str)
-	      (string-match "[<>+*/-]" e-str))
-      (user-error "Invalid ‘AMOUNT’(%s) for ingredient" str))
-    (when (string= "0" e-str) (setq e-str (concat e-str (org-shoplist--calc-unit str))))
-    (when (> 0 (string-to-number (substring e-str 0 1))) (setq e-str (concat "1" e-str)))
-    (when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
-    (apply #'concat
-	   (split-string
-	    (concat (number-to-string (funcall round-func (string-to-number (calc-eval (math-remove-units (math-read-expr e-str))))))
-		    (let ((unit (calc-eval (math-extract-units (math-read-expr e-str)))))
-		      (unless (string= "1" unit) unit)))))))
+Optional ‘SEPARATOR’ and ‘ARGS’ are supplied to (calc-eval).
+When ‘STR’ is nil or 0, return 0."
+  (if (and str (not (string= str "0")))
+      (let ((e-str (save-match-data (ignore-errors (eval (calc-eval str separator args))))))
+	(when (or (null e-str) (string-match-p "[<>+*/-]" e-str)) (user-error "Invalid ‘AMOUNT’(%s) for ingredient" str))
+	(when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
+	(if (string= "0" e-str)
+	    (concat e-str (org-shoplist--calc-unit str))
+	  (if (string-match-p "[^0-9]" (substring e-str 0 1))
+	      (concat "1" e-str)
+	    (let ((s-e-str (split-string e-str " ")))
+	      (concat (number-to-string (funcall round-func (string-to-number (car s-e-str))))
+		      (cadr s-e-str))))))
+    "0"))
 
 (defun org-shoplist--ing-transform-amount (amount &optional round-func)
   "Transform ‘AMOUNT’ to a valid form when possible else throw an error.
@@ -147,12 +157,26 @@ Optional ‘ROUND-FUNC’ is a function which is applied to the
 result to round it.  Default is math-round."
   (let ((math-backup math-simplifying-units)
 	(unit-backup math-additional-units)
-	(str-amount (if (numberp amount) (number-to-string amount) amount)))
+	(str-amount (cond ((numberp amount) (number-to-string amount))
+			  ((null amount) "0")
+			  (amount))))
     (unwind-protect
 	(progn
 	  (setq math-simplifying-units t)
-	  (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
-	  (org-shoplist--calc-eval str-amount (if (null round-func) 'math-round round-func)))
+	  (setq math-additional-units org-shoplist-additional-units)
+	  (let ((e-str-amount (org-shoplist--calc-eval str-amount (if (null round-func) 'math-round round-func))))
+	    (if (and (not (string-match "[<>+*/-]" str-amount))
+		     (string-match "[^.0-9<>+*/-]" str-amount)
+		     (not (org-shoplist--calc-unit str-amount)))
+		(if org-shoplist-auto-add-unit
+		    (progn
+		      (setq math-additional-units nil)
+		      (add-to-list 'org-shoplist-additional-units (list (intern (match-string 0 e-str-amount)) nil "*Auto inserted unit by org-shoplist"))
+		      (setq math-additional-units org-shoplist-additional-units)
+		      (setq math-units-table nil)
+		      (setq e-str-amount (org-shoplist--ing-transform-amount e-str-amount round-func)))
+		  (user-error "Unit in ‘AMOUNT’(%s) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton" amount)))
+	    e-str-amount))
       (setq math-simplifying-units math-backup)
       (setq math-additional-units unit-backup))))
 
@@ -166,7 +190,12 @@ result to round it.  Default is math-round."
 
 (defun org-shoplist-ing-unit (ing)
   "Get unit of ‘ING’."
-  (org-shoplist--calc-unit (org-shoplist-ing-amount ing)))
+  (let ((unit-backup math-additional-units))
+    (unwind-protect
+	(progn
+	  (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
+	  (org-shoplist--calc-unit (org-shoplist-ing-amount ing)))
+      (setq math-additional-units unit-backup))))
 
 (defun org-shoplist-ing-group (ing)
   "Get group of ‘ING’."
@@ -175,11 +204,6 @@ result to round it.  Default is math-round."
 (defun org-shoplist-ing-separator (ing)
   "Get separator of ‘ING’."
   (cadddr ing))
-
-(defun org-shoplist-ing-string (ing)
-  "Return ‘ING’ as follow: “(amount name)”.
-‘SEPARATOR’ is by default a space.  Can be any string."
-  (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing) org-shoplist-ing-end-char))
 
 (defun org-shoplist-ing-create (amount name &optional separator)
   "Create an ingredient.
@@ -192,8 +216,22 @@ If one constraint gets disregarded throw error."
     (let ((transform-amount (org-shoplist--ing-transform-amount amount)))
       (list name
 	    transform-amount
-	    (org-shoplist--calc-unit-group transform-amount)
+	    (org-shoplist--calc-default-unit transform-amount)
 	    (if (null separator) org-shoplist-ing-default-separator separator)))))
+
+(defun org-shoplist-ing-content-string (ing)
+  "Return ‘ING’ as follow: “amount name”.
+When ORG-SHOPLIST-ING-INVERT is non-nil will return ”name amount”."
+  (if org-shoplist-ing-invert
+      (concat (org-shoplist-ing-name ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-amount ing))
+    (concat (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing))))
+
+(defun org-shoplist-ing-full-string (ing)
+  "Return ‘ING’ as follow: “(amount name)”.
+When ORG-SHOPLIST-ING-INVERT is non-nil will return ”(name amount)”."
+  (if org-shoplist-ing-invert
+      (concat org-shoplist-ing-start-char (org-shoplist-ing-name ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-amount ing) org-shoplist-ing-end-char)
+    (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing) org-shoplist-ing-end-char)))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
@@ -242,11 +280,17 @@ given round resulting amount with it."
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
-       (cons (org-shoplist-ing-create
-	      (match-string 1 str)
-	      (match-string 3 str)
-	      (match-string 2 str))
-	     ings))
+       (if org-shoplist-ing-invert
+	   (cons (org-shoplist-ing-create
+		  (match-string 3 str)
+		  (match-string 1 str)
+		  (match-string 2 str))
+		 ings)
+	 (cons (org-shoplist-ing-create
+		(match-string 1 str)
+		(match-string 3 str)
+		(match-string 2 str))
+	       ings)))
 
     ings))
 
@@ -401,9 +445,7 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
   "Format ‘SHOPLIST’ as todo-list."
   (concat
    (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
-   (mapconcat (lambda (i)
-		(concat "*\s" org-shoplist-keyword "\s"
-			org-shoplist-ing-start-char (org-shoplist-ing-amount i) "\s" (org-shoplist-ing-name i) org-shoplist-ing-end-char))
+   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string i)))
 	      (org-shoplist-shoplist-ings shoplist)
 	      "\n")))
 
@@ -465,14 +507,13 @@ set value as inital value.
 			  (ignore-errors (/ (float new-factor) old-factor))
 			  (if (< new-factor old-factor) 'ffloor 'fceiling ))))
 
-;;	(org-shoplist-recipe-create (org-shoplist-recipe-name new-recipe) (map 'list (lambda ()) (org-shoplist-recipe-get-all-ing)))
 	(unless new-recipe (user-error "No ingredients to apply factor"))
 	;; replace current with new
 	(save-excursion
 	  (cl-mapc
 	   (lambda (new old)
-	     (search-forward (org-shoplist-ing-string old) nil t 1)
-	     (replace-match (org-shoplist-ing-string new) t))
+	     (search-forward (org-shoplist-ing-full-string old) nil t 1)
+	     (replace-match (org-shoplist-ing-full-string new) t))
 	   (org-shoplist-recipe-get-all-ing new-recipe)
 	   (org-shoplist-recipe-get-all-ing current-recipe)))))
     (org-set-property org-shoplist-factor-property-name (number-to-string new-factor))))

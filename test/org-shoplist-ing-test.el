@@ -1,4 +1,4 @@
-;;; org-shoplist-ing-test.el --- Tests for org-shoplist
+;;; org-shoplist-ing-test.el --- Tests for org-shoplist -*- lexical-binding: t -*-
 ;;; Commentary:
 ;; Tests the data structures and functions of org-shoplist
 ;;; Code:
@@ -20,45 +20,59 @@
 (ert-deftest org-shoplist-test/ing-create-100g-Nuts-newline ()
   (should (string= "\n" (org-shoplist-ing-separator (org-shoplist-ing-create "100g" "Nuts" "\n")))))
 
+
 (ert-deftest org-shoplist-test/transform-amount-valid-test ()
   "Test a weide range of diff amounts"
-  (should (string= "0" (org-shoplist--ing-transform-amount nil)))
-  (should (string= "0" (org-shoplist--ing-transform-amount 0)))
-  (should (string= "0" (org-shoplist--ing-transform-amount "0")))
-  (should (string= "0g" (org-shoplist--ing-transform-amount "0g")))
-  (should (string= "1" (org-shoplist--ing-transform-amount "1")))
-  (should (string= "2" (org-shoplist--ing-transform-amount "2.0")))
-  (should (string= "100g" (org-shoplist--ing-transform-amount "100g")))
-  (should (string= "99999g" (org-shoplist--ing-transform-amount "99999g")))
-  (should (string= "9tsp" (org-shoplist--ing-transform-amount "9tsp")))
-  (should (string= "400g" (org-shoplist--ing-transform-amount "400g")))
-  (should (string= "1ml" (org-shoplist--ing-transform-amount "1.0ml")))
-  (should (string= "100gal" (org-shoplist--ing-transform-amount "100gal")))
-  (should (string= "100gal" (org-shoplist--ing-transform-amount "100 gal")))
-  (should (string= "2390m^3" (org-shoplist--ing-transform-amount "2390 m^3")))
-  (should (string= "2.39m^3" (org-shoplist--ing-transform-amount "2390e-3 m^3")))
-  (should (string= "0.0239m^3" (org-shoplist--ing-transform-amount "23.90e-3 m^3")))
-  (should (string= "35" (org-shoplist--ing-transform-amount "12+23")))
-  (should (string= "24" (org-shoplist--ing-transform-amount "12*2")))
-  (should (string= "24mg" (org-shoplist--ing-transform-amount "12mg*2")))
-  (should (string= "21pwerg" (org-shoplist--ing-transform-amount "21pwerg"))))
+  (org-shoplist-test-test
+   (lambda ()
+     (setq org-shoplist-auto-add-unit t)
+     (should (string= "0" (org-shoplist--ing-transform-amount nil)))
+     (should (string= "0" (org-shoplist--ing-transform-amount 0)))
+     (should (string= "0" (org-shoplist--ing-transform-amount "0")))
+     (should (string= "0g" (org-shoplist--ing-transform-amount "0g")))
+     (should (string= "1" (org-shoplist--ing-transform-amount "1")))
+     (should (string= "2" (org-shoplist--ing-transform-amount "2.0")))
+     (should (string= "100g" (org-shoplist--ing-transform-amount "100g")))
+     (should (string= "99999g" (org-shoplist--ing-transform-amount "99999g")))
+     (should (string= "9tsp" (org-shoplist--ing-transform-amount "9tsp")))
+     (should (string= "400g" (org-shoplist--ing-transform-amount "400g")))
+     (should (string= "1ml" (org-shoplist--ing-transform-amount "1.0ml")))
+     (should (string= "100gal" (org-shoplist--ing-transform-amount "100gal")))
+     (should (string= "100gal" (org-shoplist--ing-transform-amount "100 gal")))
+     (should (string= "2390m^3" (org-shoplist--ing-transform-amount "2390 m^3")))
+     (should (string= "2.39m^3" (org-shoplist--ing-transform-amount "2390e-3 m^3")))
+     (should (string= "0.0239m^3" (org-shoplist--ing-transform-amount "23.90e-3 m^3")))
+     (should (string= "35" (org-shoplist--ing-transform-amount "12+23")))
+     (should (string= "24" (org-shoplist--ing-transform-amount "12*2")))
+     (should (string= "24mg" (org-shoplist--ing-transform-amount "12mg*2")))
+     (should (string= "21pwerg" (org-shoplist--ing-transform-amount "21pwerg"))))))
 
 (ert-deftest org-shoplist-test/transform-amount-error-test ()
   "Test if error is thown when passing invalid amounts"
-  (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
-		  (should-error (org-shoplist--ing-transform-amount "df.df"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1999g) for ingredient")
-		 (should-error (org-shoplist--ing-transform-amount "1ml+1999g"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1g) for ingredient")
-		 (should-error (org-shoplist--ing-transform-amount "1ml+1g"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
-		 (should-error (org-shoplist-ing-create "df.df" "Nuts"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(-234) for ingredient")
-		 (should-error (org-shoplist-ing-create "-234" "Nuts"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(a>1234) for ingredient")
-		 (should-error (org-shoplist-ing-create "a>1234" "Nuts"))))
-  (should (equal '(user-error "Invalid ‘AMOUNT’(..02 gal) for ingredient")
-		 (should-error (org-shoplist-ing-create "..02 gal" "Nuts")))))
+  (org-shoplist-test-test
+   (lambda ()
+     (setq org-shoplist-auto-add-unit nil)
+     (setq math-units-table nil)
+     (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
+		    (should-error (org-shoplist--ing-transform-amount "df.df"))))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1999g) for ingredient")
+		    (should-error (org-shoplist--ing-transform-amount "1ml+1999g"))))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(1ml+1g) for ingredient")
+		    (should-error (org-shoplist--ing-transform-amount "1ml+1g"))))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(-234) for ingredient")
+		    (should-error (org-shoplist-ing-create "-234" "Nuts"))))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(a>1234) for ingredient")
+		    (should-error (org-shoplist-ing-create "a>1234" "Nuts"))))
+     (should (equal '(user-error "Invalid ‘AMOUNT’(..02 gal) for ingredient")
+		    (should-error (org-shoplist-ing-create "..02 gal" "Nuts"))))
+     (should (equal '(user-error "Unit in ‘AMOUNT’(0pwerg) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton")
+		    (should-error (org-shoplist--ing-transform-amount "0pwerg"))))
+     (should (equal '(user-error "Unit in ‘AMOUNT’(1pwerg) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton")
+		    (should-error (org-shoplist--ing-transform-amount "1pwerg"))))
+     (should (equal '(user-error "Unit in ‘AMOUNT’(21pwerg) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton")
+		    (should-error (org-shoplist--ing-transform-amount "21pwerg"))))
+    (should (equal '(user-error "Invalid ‘AMOUNT’(250мл) for ingredient")
+		    (should-error (org-shoplist--ing-transform-amount "250мл")))))))
 
 (ert-deftest org-shoplist-test/ing-create-test-diff-wrong-amount ()
   (should (equal '(user-error "Invalid ‘AMOUNT’(df.df) for ingredient")
@@ -107,10 +121,6 @@
 (ert-deftest org-shoplist-test/ing-create-when-unit-nil ()
   (should (equal (list "Nuts" "100" "1" org-shoplist-ing-default-separator)
 		 (org-shoplist-ing-create 100 "Nuts"))))
-
-(ert-deftest org-shoplist-test/ing-create-amount-simple-sequence ()
-  (should (equal (list "Nuts" "100g" "g" org-shoplist-ing-default-separator)
-		 (org-shoplist-ing-create '(* 100 (var g var-g)) "Nuts"))))
 
 (ert-deftest org-shoplist-test/ing-create-when-amount-is-calc-expr ()
   (should (equal (list "Nuts" "200100g" "g" org-shoplist-ing-default-separator) (org-shoplist-ing-create "100g+200kg" "Nuts"))))
@@ -295,21 +305,29 @@ Nuts)")
   (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
 		 (org-shoplist-ing-read nil "((200g Nuts))"))))
 
-(ert-deftest org-shoplist-test/ing-double-enclosed-ing-with-text-in-outer-pars ()
+(ert-deftest org-shoplist-test/ing-read-double-enclosed-ing-with-text-in-outer-pars ()
   "Get ing when it’s double enclosed."
   (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
 		 (org-shoplist-ing-read nil "(asd (200g Nuts) asd)"))))
 
-(ert-deftest org-shoplist-test/ing-double-enclosed-ing-with-ing-like-text-in-outer-pars ()
+(ert-deftest org-shoplist-test/ing-read-double-enclosed-ing-with-ing-like-text-in-outer-pars ()
   "Get ing when it’s double enclosed."
   (should (equal (list (org-shoplist-ing-create "200g" "Nuts"))
 		 (org-shoplist-ing-read nil "(100g Nuts (200g Nuts))"))))
 
-(ert-deftest org-shoplist-test/two-ing-double-enclosed ()
+(ert-deftest org-shoplist-test/ing-read-two-ing-double-enclosed ()
   "Get ing when it’s double enclosed."
   (should (equal (list (org-shoplist-ing-create "100g" "Nuts")
 		       (org-shoplist-ing-create "200g" "Nuts"))
 		 (org-shoplist-ing-read nil "((100g Nuts) (200g Nuts))"))))
+
+(ert-deftest org-shoplist-test/ing-read-one-ing-invert ()
+  "Get ing when it’s double enclosed."
+  (org-shoplist-test-test
+   (lambda ()
+     (setq org-shoplist-ing-invert t)
+     (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
+		    (org-shoplist-ing-read nil "(Nuts 100g)"))))))
 
 (ert-deftest org-shoplist-test/ing-* ()
   "Test basic inputs to org-shoplist-ing-*."

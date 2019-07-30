@@ -26,7 +26,9 @@
 	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
 	(cons org-shoplist-default-format 'org-shoplist-default-format)
 	(cons math-simplifying-units 'math-simplifying-units)
-	(cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)))
+	(cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)
+	(cons org-shoplist-auto-add-unit 'org-shoplist-auto-add-unit)
+	(cons org-shoplist-ing-invert 'org-shoplist-ing-invert)))
 
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."
@@ -48,18 +50,27 @@
     (add-to-list 'math-additional-units i))
   (setq math-units-table nil))
 
-(defun org-shoplist-test-test-in-buffer (func-in-buffer)
+(defun org-shoplist-test-test (func)
   "Execute a test in temp-buffer and leave everthing in same state as before.
 'FUNC' is what should be done in the temp-buffer."
   (unwind-protect
-      (with-current-buffer (get-buffer-create org-shoplist-test-default-buffer)
-	(org-shoplist-test-load-custom-var)
-	(funcall func-in-buffer))
-    (kill-buffer org-shoplist-test-default-buffer)
+      (progn (org-shoplist-test-load-custom-var)
+	     (funcall func))
     (org-shoplist-test-reset-custom-var)))
+
+(defun org-shoplist-test-test-in-buffer (func-in-buffer)
+  "Execute a test in temp-buffer and leave everthing in same state as before.
+‘FUNC-IN-BUFFER’ is what should be done in the temp-buffer."
+  (org-shoplist-test-test
+   (lambda ()
+     (unwind-protect
+	 (with-current-buffer (get-buffer-create org-shoplist-test-default-buffer)
+	   (funcall func-in-buffer))
+       (kill-buffer org-shoplist-test-default-buffer)))))
+
 (defun org-shoplist-test-test-in-org-buffer (func-in-org-buffer)
   "Execute a test in temp-buffer and leave everthing in same state as before.
-'FUNC' is what should be done in the temp-buffer."
+‘FUNC-IN-ORG-BUFFER’ is what should be done in the temp-buffer."
   (org-shoplist-test-test-in-buffer
    (lambda ()
      (org-mode)

@@ -3,21 +3,34 @@ An extension to emacs for operating on org-files who provide
 food-recipes. It's meant to generate shopping lists and make
 eating-plans. (We talk about delicious food — nothing technical).
 ## Getting Started ##
-
 ### Installation ###
-- package-install ENT org-shoplist ENT
-Alternatively you can clone this project and add it to your load-path
+Melpa: `M-x package-install ENT org-shoplist ENT`
 
+Alternatively you can clone this project and add it to the load-path
+in your init-file:
+```
+(add-to-list 'load-path "~/.emacs.d/elisp/org-shoplist")
+(require 'org-shoplist)
+```
 ### Your first Shoplist ###
-- Create a new File
-- Add a recipe (See [Ingredients](#Ingredients)
-  and [Recipes](#Recipes)) for syntax
-- Mark your recipe for buying by setting `org-shoplist-keyword`
+- Create a new file or use an existing one
+- Add a recipe (See [Recipes](#Recipes) for some examples)
+- Mark your recipe (org-headers) for buying with `org-shoplist-keyword`
 - Press `M-x org-shoplist ENT`
+
+## Contribution ##
+If you arise any problems or limitations which makes this package
+useless for you, please leave an issue with your concern.
+
+For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
+
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char`. Simple examples for ingredients: 
 `(200g nuts), (1 nut), (1 big nut)`
+
+If you would like to have the ingredient name before amount (and unit)
+set `org-shoplist-ing-invert` to a non-nil value.
 
 Structure:
 1. `org-shoplist-ing-start-char` (default: '(')
@@ -27,8 +40,14 @@ Structure:
 4. followed by any name which can have ANY character expect `org-shoplist-ing-start-char` or `org-shoplist-ing-end-char`.
 5. `org-shoplist-ing-end-char` (default: ')')
 ### Unit ###
-You can use any unit by default that is listed in the calc-unit-table
-(`M-x calc-view-units-table`). For additional units (See [Personal Units](#Personal-Units))
+For calculating with units the calc-package is used. You can use any
+unit by default that is listed in the calc-unit-table (`M-x
+calc-view-units-table`). 
+
+For additional units:
+- If you are lazy just set (`M-x customize-variable ENT
+org-shoplist-auto-add-unit`)
+- else see [Personal Units](#Personal-Units)
 ### Customization ###
 #### Enclosing ####
 Also everything that is enclosed with `org-shoplist-ing-start-char` or
@@ -37,12 +56,11 @@ ingredient. `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char` can be the same char or they could even be
 string.
 #### Personal Units ####
-If you want to use your perosnal units you can add
-there definition to the variable `org-shoplist-additional-units`. A
-re-eval of org-shoplist.el or restart of emacs may be required.
+Unfortunately a unit can't be any character. You are well advised to
+just use A-Z and a-z. You can add the definition of your personal
+units to the variable `org-shoplist-additional-units`.
 
 An example, adding the german equivalent of Tablespoon(tbsp):
-
 ```
 (setq org-shoplist-additional-units '((tl "1 tbsp" "Teelöffel"))
 ;;First is the unit specifier (case-sensitive (is a symbol))
@@ -51,12 +69,13 @@ An example, adding the german equivalent of Tablespoon(tbsp):
 ```
 
 For "ground-units" (a unit that can't be expressed by a finner/lower
-unit) use "one" as definition: `((myUnit "1" "*My Special unit"))`
+unit) use nil as definition: `((myUnit nil "*My Special unit"))` or
+just let org-shoplist add thee definitions for you by setting `org-shoplist-auto-add-unit`.
 
 Circular definitions lead to errors: `((myUnit "myUnit" "*My Special unit"))`
 
-Beware when using relative units like cups that all cups get aggregated together.
-
+Beware when using relative units like cups, that all cups get
+aggregated together when `org-shoplist-aggregate` is non-nil (default).
 
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
@@ -77,18 +96,11 @@ Some Examples of recipes:
 - (250g Magrone)
 - (250g Emmentalerkäse)
 ```
-- As a german description:
+- Or as a german description:
 ```
 * TOBUY Älpämagerone 2
 Nimm (250ml Rahm) und (1 Zwiebel) vermische es mit (250g Magrone) und (250g Emmentalerkäse).
 Danach 15min köcheln lassen.
-```
-- As a russian description: (there you have to add the russian units
-in `org-shoplist-additional-units`.)
-```
-* TOBUY Älpämagerone 3
-Возьмите (250мл сливок) и (1 луковицу) смешайте с (250г Магрона) и (250 г сыра Эмменталь).
-Затем варить 15 минут.
 ```
 You can also have nested headers (See [Explicitness](#Explicitness)).
 
@@ -98,7 +110,6 @@ There are two behaviors depending on `org-shoplist-explicit-keyword`
 (by defualt it's nil). 
 
 When nil, all ingredients of nested headers are included. 
-
 ```
 * TOBUY Älpämagerone
 - (250g Magrone)
@@ -125,19 +136,22 @@ flakes and chocolate but without vanilla.
 A shopping list is a collection of ingredients, collected from the
 marked recipes.
 
-You can generate a shopping list by pressing `M-x org-shoplist RET
-RET` in your org-file where recipes with the `org-shoplist-keyword` are
-present.
+You can generate a shopping list by pressing `M-x org-shoplist RET` in
+your org-file where recipes with the `org-shoplist-keyword` are
+present. 
+
+With `C-u M-x org-shoplist ENT` you can pass an other
+formatter-function, also see [Format](#Format).
 ### Customization ###
 #### Aggregation ####
 You can turn off aggregation by setting `org-shoplist-aggregate` to
 nil.
 #### Format ####
-The format is established by a function which takes a shopping list as it's
-arguments. The defualt format is defined by
+The format is established by a function which takes a shopping list as
+it's arguments. The defualt format is defined by
 `org-shoplist-default-format`. If you are interested in writing your
-own shoppinglist-formating-function, you may find it helpful reading the
-functions `org-shoplist-shoplist-as-table` or
+own shoppinglist-formating-function, you may find it helpful reading
+the functions `org-shoplist-shoplist-as-table` or
 `org-shoplist-shoplist-as-todo-list` in org-shoplist.el. After evaling
 your function you can inject them when calling `org-shoplist`.
 ## Other Customization ##
