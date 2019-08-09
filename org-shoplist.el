@@ -259,14 +259,16 @@ given round resulting amount with it."
 
 (defun org-shoplist-ing-aggregate (&rest ings)
   "Aggregate ‘INGS’."
-  (let ((group-ings (seq-group-by (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x))) ings))
+  (let ((group-ings (seq-group-by
+		     (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x)))
+		     ings))
 	(aggregate-ings (list)))
     (while (car group-ings)
       (setq aggregate-ings
 	    (cons (org-shoplist-ing-create
-		   (apply #'org-shoplist-ing-+ (cdr (car group-ings)))
-		   (org-shoplist-ing-name (car (car group-ings)))
-		   (org-shoplist-ing-separator (car (car group-ings))))
+		   (apply #'org-shoplist-ing-+ (cdar group-ings))
+		   (org-shoplist-ing-name (caar group-ings))
+		   (org-shoplist-ing-separator (caar group-ings)))
 		  aggregate-ings))
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
@@ -325,7 +327,7 @@ Whenn ‘STR’ is nil read line where point is at."
 ‘INGS’ must be valid ingredients.
 Use ‘org-shoplist-ing-create’ to create valid ingredients."
   (when (and (stringp name) (string= name "")) (user-error "Invalid name for recipe: ‘%s’" name))
-  (when (listp (car (car ings))) (setq ings (car ings)))
+  (when (listp (caar ings)) (setq ings (car ings)))
   (when (and name ings (not (equal ings '(nil))))
     (list name ings)))
 
@@ -335,7 +337,7 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
 
 (defun org-shoplist-recipe-get-all-ing (recipe)
   "Get all ingredients of ‘RECIPE’."
-  (car (cdr recipe)))
+  (cadr recipe))
 
 (defun org-shoplist-recipe-* (recipe factor &optional round-func)
   "Multiply all ingredients of ‘RECIPE’ by given ‘FACTOR’.
@@ -349,12 +351,26 @@ When ROUND-FUNC given round resulting amounts with it."
 
 (defun org-shoplist--recipe-read-factor ()
   "Read the value of ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ in recipe where point is at."
-  (unless (ignore-errors (org-back-to-heading t))
-    (user-error "Not in recipe"))
-  (let ((v (ignore-errors
-	     (string-to-number
-	      (org-entry-get (point) org-shoplist-factor-property-name)))))
-    v))
+  (unless (ignore-errors (org-back-to-heading t)) (user-error "Not in recipe"))
+  (ignore-errors (string-to-number (org-entry-get (point) org-shoplist-factor-property-name))))
+
+(defun org-shoplist--recipe-read-all-ings (&optional explicit-match)
+    "Collect all ingredients of current recipe.
+‘EXPLICIT-MATCH’ when is non-nil only marked sub-headings will be included."
+    (save-match-data
+      (let ((ing-list nil)
+	    (h (org-get-heading)) ;current header
+	    (l (org-current-level)))
+	(beginning-of-line 2)
+	(while (and (or (string= h (org-get-heading))
+			(> (org-current-level) l))
+		    (not (>= (point) (point-max))))
+	  (if explicit-match
+	      (if (string= (org-get-todo-state) org-shoplist-keyword)
+		  (setq ing-list (append ing-list (org-shoplist-ing-read))))
+	    (setq ing-list (append ing-list (org-shoplist-ing-read))))
+	  (beginning-of-line 2))
+	ing-list)))
 
 (defun org-shoplist-recipe-read (&optional aggregate explicit-match)
   "Assums that at beginning of recipe.
@@ -363,26 +379,12 @@ Return a recipe structure or throw error.  To read a recipe there
 must be at least a org-heading (name of the recipe) and one
 ingredient.
 ‘AGGREGATE’ ingredients when non-nil.
-‘EXPLICIT-MATCH’ when is non-nil only marked headings will be included.
+‘EXPLICIT-MATCH’ when is non-nil only marked sub-headings will be included.
 See ‘org-shoplist-recipe-create’ for more details on creating general
 recipes."
   (save-match-data
     (unless (looking-at org-heading-regexp) (user-error "Not at beginning of recipe"))
-    (let ((read-ings
-	   (save-match-data
-	     (let ((ing-list nil)
-		   (h (org-get-heading))		;current header
-		   (l (org-current-level)))
-	       (beginning-of-line 2)
-	       (while (and (or (string= h (org-get-heading))
-			       (> (org-current-level) l))
-			   (not (>= (point) (point-max))))
-		 (if explicit-match
-		     (if (string= (org-get-todo-state) org-shoplist-keyword)
-			 (setq ing-list (append ing-list (org-shoplist-ing-read))))
-		   (setq ing-list (append ing-list (org-shoplist-ing-read))))
-		 (beginning-of-line 2))
-	       ing-list))))
+    (let ((read-ings (org-shoplist--recipe-read-all-ings explicit-match)))
       (org-shoplist-recipe-create
        (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
        (if aggregate (apply #'org-shoplist-ing-aggregate read-ings) read-ings)))))
@@ -390,8 +392,7 @@ recipes."
 (defun org-shoplist-shoplist-create (&rest recipes)
   "Create a shoplist.
 ‘RECIPES’ is a sequence of recipes."
-  (when (and recipes
-	     (car recipes))
+  (when (and recipes (car recipes))
     (list (calendar-current-date)
 	  recipes
 	  (reverse (apply #'org-shoplist-ing-aggregate
