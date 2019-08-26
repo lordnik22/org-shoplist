@@ -28,7 +28,8 @@
 	(cons math-simplifying-units 'math-simplifying-units)
 	(cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)
 	(cons org-shoplist-auto-add-unit 'org-shoplist-auto-add-unit)
-	(cons org-shoplist-ing-invert 'org-shoplist-ing-invert)))
+	(cons org-shoplist-ing-invert 'org-shoplist-ing-invert)
+	(cons org-shoplist-precision 'org-shoplist-precision)))
 
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."

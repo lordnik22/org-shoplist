@@ -439,6 +439,42 @@ Salad) mahlen.")
   :END:
 - (100g Nuts)"))))))
 
+(ert-deftest org-shoplist-test/factor-up-and-down-ten-times-same-amount ()
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (insert "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)")
+     (goto-char (point-min))
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-up)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (org-shoplist-recipe-factor-down)
+     (should (string= (buffer-string)
+		      (concat "* Test Header
+  :PROPERTIES:
+  :" org-shoplist-factor-property-name ":   1
+  :END:
+- (100g Nuts)"))))))
+
 (ert-deftest org-shoplist-test/factor-up-1-2-one-header-one-ingredient ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()

@@ -91,6 +91,11 @@ When nil, handle ingredient amount first, name second"
 Else throw an ‘user-error’."
   :type 'boolean)
 
+(defcustom org-shoplist-precision 3
+  "A integer defining how many numbers should be round when necessary.
+Must be at least 3."
+  :type 'integer)
+
 (defconst org-shoplist--ing-first-part-regex
   '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
 	   (regexp-quote org-shoplist-ing-start-char)
@@ -146,9 +151,11 @@ When ‘STR’ is nil or 0, return 0."
 	    (concat e-str (org-shoplist--calc-unit str))
 	  (if (string-match-p "[^0-9]" (substring e-str 0 1))
 	      (concat "1" e-str)
-	    (let ((s-e-str (split-string e-str " ")))
-	      (concat (number-to-string (funcall round-func (string-to-number (car s-e-str))))
-		      (cadr s-e-str))))))
+	    (let* ((split-amount-name (split-string e-str " "))
+		   (split-float-point (split-string (car split-amount-name) "\\."))
+		   (numbers-before (car split-float-point))
+		   (numbers-after (cadr split-float-point)))
+	      (concat (calc-eval (funcall round-func (car split-amount-name))) (cadr split-amount-name))))))
     "0"))
 
 (defun org-shoplist--ing-transform-amount (amount &optional round-func)
@@ -164,7 +171,12 @@ result to round it.  Default is math-round."
 	(progn
 	  (setq math-simplifying-units t)
 	  (setq math-additional-units org-shoplist-additional-units)
-	  (let ((e-str-amount (org-shoplist--calc-eval str-amount (if (null round-func) 'math-round round-func))))
+	  (let ((e-str-amount
+		 (org-shoplist--calc-eval
+		  str-amount
+		  (if (null round-func)
+		      (lambda (a) (math-round (math-read-expr a) org-shoplist-precision))
+		    round-func))))
 	    (if (and (not (string-match "[<>+*/-]" str-amount))
 		     (string-match "[^.0-9<>+*/-]" str-amount)
 		     (not (org-shoplist--calc-unit str-amount)))
@@ -506,7 +518,7 @@ set value as inital value.
 	     (new-recipe (org-shoplist-recipe-*
 			  current-recipe
 			  (ignore-errors (/ (float new-factor) old-factor))
-			  (if (< new-factor old-factor) 'ffloor 'fceiling ))))
+			  (if (< new-factor old-factor) 'math-floor 'math-ceiling))))
 
 	(unless new-recipe (user-error "No ingredients to apply factor"))
 	;; replace current with new

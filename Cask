@@ -7,7 +7,7 @@
 (depends-on "calc")
 (depends-on "org")
 (depends-on "calendar")
-(depends-on "cl")
+(depends-on "cl-lib")
 
 (development
  (depends-on "ecukes")
