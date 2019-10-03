@@ -38,6 +38,10 @@
   "Keyword to mark recies for shopping."
   :type 'string)
 
+(defcustom org-shoplist-default-date-property-name "EATDATE"
+  "Keyword to add a eatdate for a recipe."
+  :type 'string)
+
 (defcustom org-shoplist-factor-property-name "FACTOR"
   "The default name for the factor-property of headers."
   :type 'string)
@@ -118,6 +122,14 @@ Must be at least 3."
 (defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]*\\)"
   "A regex which matches whitespace which splits the date of ingredient.")
 
+(defconst org-shoplist-ing-regex-invert
+  '(concat (regexp-quote org-shoplist-ing-start-char)
+	   (eval org-shoplist--ing-second-part-regex)
+	   (eval org-shoplist--ing-content-spliter-regex)
+	   (eval org-shoplist--ing-first-part-regex)
+	   (regexp-quote org-shoplist-ing-end-char))
+  "Match an ingredient.")
+
 (defconst org-shoplist-ing-regex
   '(concat (regexp-quote org-shoplist-ing-start-char)
 	   (eval org-shoplist--ing-first-part-regex)
@@ -125,7 +137,6 @@ Must be at least 3."
 	   (eval org-shoplist--ing-second-part-regex)
 	   (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
-
 
 (defun org-shoplist--calc-unit (amount)
   "Get the unit from AMOUNT by suppling it to calc.
@@ -152,9 +163,7 @@ When ‘STR’ is nil or 0, return 0."
 	  (if (string-match-p "[^0-9]" (substring e-str 0 1))
 	      (concat "1" e-str)
 	    (let* ((split-amount-name (split-string e-str " "))
-		   (split-float-point (split-string (car split-amount-name) "\\."))
-		   (numbers-before (car split-float-point))
-		   (numbers-after (cadr split-float-point)))
+		   (split-float-point (split-string (car split-amount-name) "\\.")))
 	      (concat (calc-eval (funcall round-func (car split-amount-name))) (cadr split-amount-name))))))
     "0"))
 
@@ -290,7 +299,9 @@ given round resulting amount with it."
 ‘STR’ is a string where regex is getting matched against.
 ‘START-POS’ is where in string should start.
 ‘INGS’ is a list of the found ingredients."
-  (if (string-match (eval org-shoplist-ing-regex) str start-pos)
+  (if (string-match (if org-shoplist-ing-invert (eval org-shoplist-ing-regex-invert) (eval org-shoplist-ing-regex))
+		    str
+		    start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
@@ -559,6 +570,60 @@ ingredients of (nested) recipes which are marked."
   "An overview of the current recipes you added."
   (interactive)
   (org-search-view t org-shoplist-keyword))
+
+(defun org-eatplan-add-date (&optional with-time to-time from-string prompt
+				default-time default-input inactive)
+  "Add date to a recipe.
+Args are used for 'org-read-date'."
+  (interactive "P")
+  (save-excursion
+    (end-of-line)
+    (let ((i 0)
+          (stars (progn
+                   (re-search-backward org-heading-regexp nil t 1)
+                   (substring (match-string 1) 1)))
+          (shoplist-heading-regexp (concat "\\*+ " org-shoplist-keyword "")))
+
+      (while (and
+              (not (looking-at-p shoplist-heading-regexp))
+              (< 0 (length stars)))
+        (re-search-backward (concat "^" (regexp-quote stars) " .+$") nil t 1)
+        (setq stars (substring stars 1)))
+          (progn
+            (while (not (string= nil (org-entry-get (point) (concat org-shoplist-default-date-property-name (number-to-string i)))))
+              (setq i (+ i 1)))
+            (org-set-property (concat org-shoplist-default-date-property-name (number-to-string i))
+                              (concat "<" (org-read-date
+                                           with-time to-time from-string
+                                           prompt default-time default-input
+                                           inactive)
+                                      ">"))))))
+
+(defun org-eatplan ()
+  "Generate a eatplan by current buffer."
+  (interactive)
+  (let ((day-numbers
+	 (with-temp-buffer
+	   (insert-file-contents "/home/lordnik/GoogleDrive/system/privat/food/food.org")
+	   (org-get-all-dates
+	    (point-min)
+	    (point-max)
+	    'no-ranges
+	    t
+	    nil)))
+	d entries)
+    ;;get date for eatplan (org-shoplist-get-dates)
+    ;; don’t numerate. name of property is equal name of eatplan
+    ;; value of property is can be have multiple dates (order dosn’t matter,
+    
+    (while (setq d (pop day-numbers))
+      (setq entries
+	    (append entries
+		    (org-agenda-get-day-entries "/home/lordnik/GoogleDrive/system/privat/food/food.org"
+						(calendar-gregorian-from-absolute d)))))
+    (org-agenda-add-time-grid-maybe entries (point) nil)
+    (insert (mapconcat 'identity entries "\n"))
+    ))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
