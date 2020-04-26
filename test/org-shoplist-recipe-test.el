@@ -302,6 +302,11 @@ Salad) mahlen.")
   "From nothing comes nothing."
   (should (eq nil (org-shoplist-recipe-* nil 2))))
 
+(ert-deftest org-shoplist-test/recipe-*-apply-factor-to-recipe-factor ()
+  "Return recipe with adjusted internal factor."
+  (should (equal (org-shoplist-recipe-create "Test" 6 (org-shoplist-ing-create "200g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" 3 (org-shoplist-ing-create "100g" "Nuts")) 2))))
+
 (ert-deftest org-shoplist-test/recipe-*-2-200g ()
   "Multiply all ingredients of recipe by given factor. "
   (should (equal (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "400g" "Nuts"))

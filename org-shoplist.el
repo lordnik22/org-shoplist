@@ -378,7 +378,7 @@ When ROUND-FUNC given round resulting amounts with it."
     (let (f-ing-list)
       (dolist (i (org-shoplist-recipe-get-all-ing recipe) f-ing-list)
         (push (org-shoplist-ing-* i factor round-func) f-ing-list))
-      (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (org-shoplist-recipe-factor recipe) (reverse f-ing-list)))))
+      (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (* factor (org-shoplist-recipe-factor recipe)) (reverse f-ing-list)))))
 
 (defun org-shoplist--recipe-read-factor ()
   "Read the value of ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ in recipe where point is at."
@@ -482,12 +482,25 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
               (org-shoplist-shoplist-ings shoplist)
               "\n")))
 
+(defun org-shoplist-shoplist-as-recipe-check-list (shoplist)
+  "Format ‘SHOPLIST’ as recipe-check-list."
+  (concat
+   (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
+   (mapconcat (lambda (r)
+                (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-recipe-name r) "\s[0/0]\n"
+                        (mapconcat (lambda (i) (concat "-\s[ ]\s" (org-shoplist-ing-content-string i)))
+                                   (org-shoplist-recipe-get-all-ing r)
+                                   "\n")))
+              (org-shoplist-shoplist-recipes shoplist)
+              "\n")))
+
 (defun org-shoplist-shoplist-insert (as-format)
   "Insert a shoplist with given format(‘AS-FORMAT’)."
   (save-excursion
     (funcall #'org-mode)
     (insert as-format)
     (goto-char (point-min))
+    (org-update-checkbox-count t)
     (when (org-at-table-p) (org-table-align))))
 
 (defun org-shoplist (&optional arg)
@@ -548,8 +561,8 @@ set value as inital value.
              (search-forward (org-shoplist-ing-full-string old) nil t 1)
              (replace-match (org-shoplist-ing-full-string new) t))
            (org-shoplist-recipe-get-all-ing new-recipe)
-           (org-shoplist-recipe-get-all-ing current-recipe)))))
-    (org-set-property org-shoplist-factor-property-name (number-to-string new-factor))))
+           (org-shoplist-recipe-get-all-ing current-recipe))
+          (org-set-property org-shoplist-factor-property-name (org-shoplist-recipe-factor new-recipe))))) ))
 
 (defun org-shoplist-recipe-factor-down (&optional arg)
   "Decrement the factor-property of current header.
