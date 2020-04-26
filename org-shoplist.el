@@ -22,6 +22,7 @@
 (require 'calc-ext)
 (require 'calc-units)
 (require 'org)
+(require 'org-agenda)
 (require 'calendar)
 (require 'cl-lib)
 
@@ -54,8 +55,8 @@
   "Additional units that are needed for recipes with special units.
 Beaware that the unit can't contain dots."
   :type '(repeat (list (symbol)
-		       (string :tag "Definition")
-		       (string :tag "Description"))))
+                       (string :tag "Definition")
+                       (string :tag "Description"))))
 
 (defcustom org-shoplist-explicit-keyword nil
   "When non-nil, only striclty include ingredients of marked headings.
@@ -70,7 +71,7 @@ When nil won’t aggregate."
   :type 'boolean)
 
 (defcustom org-shoplist-ing-invert nil
-  "When non-nil, handle ingredient name first, amount second.
+  "EXPERIMENTAL: When non-nil, handle ingredient name first, amount second.
 When nil, handle ingredient amount first, name second"
   :type 'boolean)
 
@@ -102,18 +103,18 @@ Must be at least 3."
 
 (defconst org-shoplist--ing-first-part-regex
   '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
-	   (regexp-quote org-shoplist-ing-start-char)
-	   (regexp-quote org-shoplist-ing-end-char)
-	   (regexp-quote org-shoplist-ing-start-char)
-	   (regexp-quote org-shoplist-ing-end-char))
+           (regexp-quote org-shoplist-ing-start-char)
+           (regexp-quote org-shoplist-ing-end-char)
+           (regexp-quote org-shoplist-ing-start-char)
+           (regexp-quote org-shoplist-ing-end-char))
   "A regex which matches first part of ingredient the amount.")
 
 (defconst org-shoplist--ing-second-part-regex
   '(format "\\([^[:space:]%s%s]?[^%s%s]+?\\)"
-	   (regexp-quote org-shoplist-ing-start-char)
-	   (regexp-quote org-shoplist-ing-end-char)
-	   (regexp-quote org-shoplist-ing-start-char)
-	   (regexp-quote org-shoplist-ing-end-char))
+           (regexp-quote org-shoplist-ing-start-char)
+           (regexp-quote org-shoplist-ing-end-char)
+           (regexp-quote org-shoplist-ing-start-char)
+           (regexp-quote org-shoplist-ing-end-char))
   "A regex which matches second part of the ingredient the name.")
 
 (defconst org-shoplist--ing-content-spliter-regex "\\([[:space:]]+\\)"
@@ -124,18 +125,18 @@ Must be at least 3."
 
 (defconst org-shoplist-ing-regex-invert
   '(concat (regexp-quote org-shoplist-ing-start-char)
-	   (eval org-shoplist--ing-second-part-regex)
-	   (eval org-shoplist--ing-content-spliter-regex)
-	   (eval org-shoplist--ing-first-part-regex)
-	   (regexp-quote org-shoplist-ing-end-char))
+           (eval org-shoplist--ing-second-part-regex)
+           (eval org-shoplist--ing-content-spliter-regex)
+           (eval org-shoplist--ing-first-part-regex)
+           (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
 (defconst org-shoplist-ing-regex
   '(concat (regexp-quote org-shoplist-ing-start-char)
-	   (eval org-shoplist--ing-first-part-regex)
-	   (eval org-shoplist--ing-content-spliter-regex)
-	   (eval org-shoplist--ing-second-part-regex)
-	   (regexp-quote org-shoplist-ing-end-char))
+           (eval org-shoplist--ing-first-part-regex)
+           (eval org-shoplist--ing-content-spliter-regex)
+           (eval org-shoplist--ing-second-part-regex)
+           (regexp-quote org-shoplist-ing-end-char))
   "Match an ingredient.")
 
 (defun org-shoplist--calc-unit (amount)
@@ -156,15 +157,14 @@ Optional ‘SEPARATOR’ and ‘ARGS’ are supplied to (calc-eval).
 When ‘STR’ is nil or 0, return 0."
   (if (and str (not (string= str "0")))
       (let ((e-str (save-match-data (ignore-errors (eval (calc-eval str separator args))))))
-	(when (or (null e-str) (string-match-p "[<>+*/-]" e-str)) (user-error "Invalid ‘AMOUNT’(%s) for ingredient" str))
-	(when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
-	(if (string= "0" e-str)
-	    (concat e-str (org-shoplist--calc-unit str))
-	  (if (string-match-p "[^0-9]" (substring e-str 0 1))
-	      (concat "1" e-str)
-	    (let* ((split-amount-name (split-string e-str " "))
-		   (split-float-point (split-string (car split-amount-name) "\\.")))
-	      (concat (calc-eval (funcall round-func (car split-amount-name))) (cadr split-amount-name))))))
+        (when (or (null e-str) (string-match-p "[<>+*/-]" e-str)) (user-error "Invalid ‘AMOUNT’(%s) for ingredient" str))
+        (when (string-match "\\(\\.\\)\\([^0-9]\\|$\\)" e-str) (setq e-str (replace-match "" t t e-str 1)))
+        (if (string= "0" e-str)
+            (concat e-str (org-shoplist--calc-unit str))
+          (if (string-match-p "[^0-9]" (substring e-str 0 1))
+              (concat "1" e-str)
+            (let* ((split-amount-name (split-string e-str " ")))
+              (concat (calc-eval (funcall round-func (car split-amount-name))) (cadr split-amount-name))))))
     "0"))
 
 (defun org-shoplist--ing-transform-amount (amount &optional round-func)
@@ -172,32 +172,32 @@ When ‘STR’ is nil or 0, return 0."
 Optional ‘ROUND-FUNC’ is a function which is applied to the
 result to round it.  Default is math-round."
   (let ((math-backup math-simplifying-units)
-	(unit-backup math-additional-units)
-	(str-amount (cond ((numberp amount) (number-to-string amount))
-			  ((null amount) "0")
-			  (amount))))
+        (unit-backup math-additional-units)
+        (str-amount (cond ((numberp amount) (number-to-string amount))
+                          ((null amount) "0")
+                          (amount))))
     (unwind-protect
-	(progn
-	  (setq math-simplifying-units t)
-	  (setq math-additional-units org-shoplist-additional-units)
-	  (let ((e-str-amount
-		 (org-shoplist--calc-eval
-		  str-amount
-		  (if (null round-func)
-		      (lambda (a) (math-round (math-read-expr a) org-shoplist-precision))
-		    round-func))))
-	    (if (and (not (string-match "[<>+*/-]" str-amount))
-		     (string-match "[^.0-9<>+*/-]" str-amount)
-		     (not (org-shoplist--calc-unit str-amount)))
-		(if org-shoplist-auto-add-unit
-		    (progn
-		      (setq math-additional-units nil)
-		      (add-to-list 'org-shoplist-additional-units (list (intern (match-string 0 e-str-amount)) nil "*Auto inserted unit by org-shoplist"))
-		      (setq math-additional-units org-shoplist-additional-units)
-		      (setq math-units-table nil)
-		      (setq e-str-amount (org-shoplist--ing-transform-amount e-str-amount round-func)))
-		  (user-error "Unit in ‘AMOUNT’(%s) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton" amount)))
-	    e-str-amount))
+        (progn
+          (setq math-simplifying-units t)
+          (setq math-additional-units org-shoplist-additional-units)
+          (let ((e-str-amount
+                 (org-shoplist--calc-eval
+                  str-amount
+                  (if (null round-func)
+                      (lambda (a) (math-round (math-read-expr a) org-shoplist-precision))
+                    round-func))))
+            (if (and (not (string-match "[<>+*/-]" str-amount))
+                     (string-match "[^.0-9<>+*/-]" str-amount)
+                     (not (org-shoplist--calc-unit str-amount)))
+                (if org-shoplist-auto-add-unit
+                    (progn
+                      (setq math-additional-units nil)
+                      (add-to-list 'org-shoplist-additional-units (list (intern (match-string 0 e-str-amount)) nil "*Auto inserted unit by org-shoplist"))
+                      (setq math-additional-units org-shoplist-additional-units)
+                      (setq math-units-table nil)
+                      (setq e-str-amount (org-shoplist--ing-transform-amount e-str-amount round-func)))
+                  (user-error "Unit in ‘AMOUNT’(%s) unknown; Set org-shoplist-auto-add-unit to automatically add these units with a default definiton" amount)))
+            e-str-amount))
       (setq math-simplifying-units math-backup)
       (setq math-additional-units unit-backup))))
 
@@ -213,9 +213,9 @@ result to round it.  Default is math-round."
   "Get unit of ‘ING’."
   (let ((unit-backup math-additional-units))
     (unwind-protect
-	(progn
-	  (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
-	  (org-shoplist--calc-unit (org-shoplist-ing-amount ing)))
+        (progn
+          (dolist (i org-shoplist-additional-units) (add-to-list 'math-additional-units i))
+          (org-shoplist--calc-unit (org-shoplist-ing-amount ing)))
       (setq math-additional-units unit-backup))))
 
 (defun org-shoplist-ing-group (ing)
@@ -236,9 +236,9 @@ If one constraint gets disregarded throw error."
     (unless (stringp name) (user-error "Invalid ‘NAME’(%S) for ingredient" name))
     (let ((transform-amount (org-shoplist--ing-transform-amount amount)))
       (list name
-	    transform-amount
-	    (org-shoplist--calc-default-unit transform-amount)
-	    (if (null separator) org-shoplist-ing-default-separator separator)))))
+            transform-amount
+            (org-shoplist--calc-default-unit transform-amount)
+            (if (null separator) org-shoplist-ing-default-separator separator)))))
 
 (defun org-shoplist-ing-content-string (ing)
   "Return ‘ING’ as follow: “amount name”.
@@ -257,14 +257,14 @@ When ORG-SHOPLIST-ING-INVERT is non-nil will return ”(name amount)”."
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ toghether return the sum."
   (let ((sum-amount
-	 (mapconcat
-	  (lambda (x)
-	    (cond ((stringp x) x)
-		  ((integerp x) (number-to-string x))
-		  ((null x) "0")
-		  ((listp x) (org-shoplist-ing-amount x))
-		  (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
-	  amounts "+")))
+         (mapconcat
+          (lambda (x)
+            (cond ((stringp x) x)
+                  ((integerp x) (number-to-string x))
+                  ((null x) "0")
+                  ((listp x) (org-shoplist-ing-amount x))
+                  (t (user-error "Given ‘AMOUNT’(%S) can’t be converted" x))))
+          amounts "+")))
     (let ((t-sum-amount (ignore-errors (org-shoplist--ing-transform-amount sum-amount))))
       (unless t-sum-amount (user-error "Incompatible units while aggregating(%S)" amounts))
       t-sum-amount)))
@@ -281,16 +281,16 @@ given round resulting amount with it."
 (defun org-shoplist-ing-aggregate (&rest ings)
   "Aggregate ‘INGS’."
   (let ((group-ings (seq-group-by
-		     (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x)))
-		     ings))
-	(aggregate-ings (list)))
+                     (lambda (x) (list (org-shoplist-ing-name x) (org-shoplist-ing-group x)))
+                     ings))
+        (aggregate-ings (list)))
     (while (car group-ings)
       (setq aggregate-ings
-	    (cons (org-shoplist-ing-create
-		   (apply #'org-shoplist-ing-+ (cdar group-ings))
-		   (org-shoplist-ing-name (caar group-ings))
-		   (org-shoplist-ing-separator (caar group-ings)))
-		  aggregate-ings))
+            (cons (org-shoplist-ing-create
+                   (apply #'org-shoplist-ing-+ (cdar group-ings))
+                   (org-shoplist-ing-name (caar group-ings))
+                   (org-shoplist-ing-separator (caar group-ings)))
+                  aggregate-ings))
       (setq group-ings (cdr group-ings)))
     aggregate-ings))
 
@@ -300,22 +300,22 @@ given round resulting amount with it."
 ‘START-POS’ is where in string should start.
 ‘INGS’ is a list of the found ingredients."
   (if (string-match (if org-shoplist-ing-invert (eval org-shoplist-ing-regex-invert) (eval org-shoplist-ing-regex))
-		    str
-		    start-pos)
+                    str
+                    start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
        (if org-shoplist-ing-invert
-	   (cons (org-shoplist-ing-create
-		  (match-string 3 str)
-		  (match-string 1 str)
-		  (match-string 2 str))
-		 ings)
-	 (cons (org-shoplist-ing-create
-		(match-string 1 str)
-		(match-string 3 str)
-		(match-string 2 str))
-	       ings)))
+           (cons (org-shoplist-ing-create
+                  (match-string 3 str)
+                  (match-string 1 str)
+                  (match-string 2 str))
+                 ings)
+         (cons (org-shoplist-ing-create
+                (match-string 1 str)
+                (match-string 3 str)
+                (match-string 2 str))
+               ings)))
 
     ings))
 
@@ -324,13 +324,13 @@ given round resulting amount with it."
 STR which maybe broken
 LAST-POS position of last match"
   (when (string-match (concat (regexp-quote org-shoplist-ing-start-char) (eval org-shoplist--ing-first-part-regex) (eval org-shoplist--ing-content-spliter-regex) "$")
-		      str
-		      last-pos)
+                      str
+                      last-pos)
     (let ((ing-start (match-string 0 str))
-	  (nl (save-excursion (beginning-of-line 2) (thing-at-point 'line))))
+          (nl (save-excursion (beginning-of-line 2) (thing-at-point 'line))))
       (when (string-match (concat "^" (eval org-shoplist--ing-optional-content-spliter-regex) (eval org-shoplist--ing-second-part-regex) (regexp-quote org-shoplist-ing-end-char))
-			  nl)
-	(concat ing-start (match-string 0 nl))))))
+                          nl)
+        (concat ing-start (match-string 0 nl))))))
 
 (defun org-shoplist-ing-read (&optional aggregate str)
   "‘AGGREGATE’ output when non-nil else return parsed ‘STR’ raw.
@@ -339,14 +339,15 @@ Whenn ‘STR’ is nil read line where point is at."
   (unless (or (null str) (string= str ""))
     (let ((read-ings (org-shoplist--ing-read-loop str 0 '())))
       (when-let ((breaked-ing (org-shoplist--ing-concat-when-broken str (if (null read-ings) 0 (match-end 0)))))
-	(setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
+        (setq read-ings (org-shoplist--ing-read-loop breaked-ing 0 read-ings)))
       (if aggregate
-	  (apply #'org-shoplist-ing-aggregate read-ings)
-	(reverse read-ings)))))
+          (apply #'org-shoplist-ing-aggregate read-ings)
+        (reverse read-ings)))))
 
-(defun org-shoplist-recipe-create (name &rest ings)
+(defun org-shoplist-recipe-create (name properties &rest ings)
   "Create a recipe.
 ‘NAME’ must be a string.
+‘PROPERTIES’ is the result of (org-entry-properties) when read in buffer
 ‘INGS’ must be valid ingredients.
 Use ‘org-shoplist-ing-create’ to create valid ingredients."
   (when (and (stringp name) (string= name "")) (user-error "Invalid name for recipe: ‘%s’" name))
@@ -362,6 +363,10 @@ Use ‘org-shoplist-ing-create’ to create valid ingredients."
   "Get all ingredients of ‘RECIPE’."
   (cadr recipe))
 
+(defun org-shoplist-recipe-properties (recipe)
+  "Get all properties on ‘RECIPE’."
+  (caddr recipe))
+
 (defun org-shoplist-recipe-* (recipe factor &optional round-func)
   "Multiply all ingredients of ‘RECIPE’ by given ‘FACTOR’.
 When ROUND-FUNC given round resulting amounts with it."
@@ -369,31 +374,31 @@ When ROUND-FUNC given round resulting amounts with it."
       recipe
     (let (f-ing-list)
       (dolist (i (org-shoplist-recipe-get-all-ing recipe) f-ing-list)
-	(push (org-shoplist-ing-* i factor round-func) f-ing-list))
+        (push (org-shoplist-ing-* i factor round-func) f-ing-list))
       (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (reverse f-ing-list)))))
 
 (defun org-shoplist--recipe-read-factor ()
   "Read the value of ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ in recipe where point is at."
-  (unless (ignore-errors (org-back-to-heading t)) (user-error "Not in recipe"))
+  (unless (ignore-errors (org-back-to-heading t)) (user-error "Recipe not found"))
   (ignore-errors (string-to-number (org-entry-get (point) org-shoplist-factor-property-name))))
 
 (defun org-shoplist--recipe-read-all-ings (&optional explicit-match)
-    "Collect all ingredients of current recipe.
+  "Collect all ingredients of current recipe.
 ‘EXPLICIT-MATCH’ when is non-nil only marked sub-headings will be included."
-    (save-match-data
-      (let ((ing-list nil)
-	    (h (org-get-heading)) ;current header
-	    (l (org-current-level)))
-	(beginning-of-line 2)
-	(while (and (or (string= h (org-get-heading))
-			(> (org-current-level) l))
-		    (not (>= (point) (point-max))))
-	  (if explicit-match
-	      (if (string= (org-get-todo-state) org-shoplist-keyword)
-		  (setq ing-list (append ing-list (org-shoplist-ing-read))))
-	    (setq ing-list (append ing-list (org-shoplist-ing-read))))
-	  (beginning-of-line 2))
-	ing-list)))
+  (save-match-data
+    (let ((ing-list nil)
+          (h (org-get-heading)) ;current header
+          (l (org-current-level)))
+      (beginning-of-line 2)
+      (while (and (or (string= h (org-get-heading))
+                      (> (org-current-level) l))
+                  (not (>= (point) (point-max))))
+        (if explicit-match
+            (if (string= (org-get-todo-state) org-shoplist-keyword)
+                (setq ing-list (append ing-list (org-shoplist-ing-read))))
+          (setq ing-list (append ing-list (org-shoplist-ing-read))))
+        (beginning-of-line 2))
+      ing-list)))
 
 (defun org-shoplist-recipe-read (&optional aggregate explicit-match)
   "Assums that at beginning of recipe.
@@ -417,10 +422,10 @@ recipes."
 ‘RECIPES’ is a sequence of recipes."
   (when (and recipes (car recipes))
     (list (calendar-current-date)
-	  recipes
-	  (reverse (apply #'org-shoplist-ing-aggregate
-			  (apply #'append
-				 (mapcar #'org-shoplist-recipe-get-all-ing recipes)))))))
+          recipes
+          (reverse (apply #'org-shoplist-ing-aggregate
+                          (apply #'append
+                                 (mapcar #'org-shoplist-recipe-get-all-ing recipes)))))))
 
 (defun org-shoplist-shoplist-creation-date (shoplist)
   "Get shopdate of shoplist.
@@ -444,34 +449,34 @@ See ‘org-shoplist-recipe-create’ for more details on creating general recipe
 ‘AGGREGATE’ ingredients when non-nil.
 ‘EXPLICIT-MATCH’ when is non-nil only marked headings will be included."
   (let ((recipe-list
-	 (save-match-data
-	   (let ((recipe-list nil))
-	     (while (and (not (= (point-max) (point)))
-			 (search-forward-regexp org-heading-regexp nil t 1))
-	       (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
-		 (beginning-of-line 1)
-		 (if (null recipe-list)
-		     (setq recipe-list (list (org-shoplist-recipe-read aggregate explicit-match)))
-		   (push (org-shoplist-recipe-read aggregate explicit-match) recipe-list))))
-	     recipe-list))))
+         (save-match-data
+           (let ((recipe-list nil))
+             (while (and (not (= (point-max) (point)))
+                         (search-forward-regexp org-heading-regexp nil t 1))
+               (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
+                 (beginning-of-line 1)
+                 (if (null recipe-list)
+                     (setq recipe-list (list (org-shoplist-recipe-read aggregate explicit-match)))
+                   (push (org-shoplist-recipe-read aggregate explicit-match) recipe-list))))
+             recipe-list))))
     (apply #'org-shoplist-shoplist-create (reverse recipe-list))))
 
 (defun org-shoplist-shoplist-as-table (shoplist)
   "Format ‘SHOPLIST’ as table."
   (concat "|" (mapconcat 'identity org-shoplist-table-header "|")
-	  "|\n"
-	  (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
-		     (org-shoplist-shoplist-ings shoplist)
-		     "|\n")
-	  "|\n"))
+          "|\n"
+          (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
+                     (org-shoplist-shoplist-ings shoplist)
+                     "|\n")
+          "|\n"))
 
 (defun org-shoplist-shoplist-as-todo-list (shoplist)
   "Format ‘SHOPLIST’ as todo-list."
   (concat
    (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
    (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string i)))
-	      (org-shoplist-shoplist-ings shoplist)
-	      "\n")))
+              (org-shoplist-shoplist-ings shoplist)
+              "\n")))
 
 (defun org-shoplist-shoplist-insert (as-format)
   "Insert a shoplist with given format(‘AS-FORMAT’)."
@@ -487,13 +492,13 @@ With a non-default prefix argument ARG, prompt the user for a
 formatter; otherwise, just use `org-shoplist-default-format'."
   (interactive "p")
   (let ((formatter
-	 (if (= arg 1)
-	     org-shoplist-default-format
-	   (intern (completing-read "Formatter-Name: " obarray 'functionp t nil nil "org-shoplist-default-format"))))
+         (if (= arg 1)
+             org-shoplist-default-format
+           (intern (completing-read "Formatter-Name: " obarray 'functionp t nil nil "org-shoplist-default-format"))))
         (sl
-	 (save-excursion
-	   (goto-char (point-min))
-	   (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword))))
+         (save-excursion
+           (goto-char (point-min))
+           (org-shoplist-shoplist-read org-shoplist-aggregate org-shoplist-explicit-keyword))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
@@ -526,20 +531,20 @@ set value as inital value.
     (when (< new-factor 1) (user-error "Can’t decrement under 1"))
     (when old-factor
       (let* ((current-recipe (save-excursion (org-shoplist-recipe-read nil inclusivness)))
-	     (new-recipe (org-shoplist-recipe-*
-			  current-recipe
-			  (ignore-errors (/ (float new-factor) old-factor))
-			  (if (< new-factor old-factor) 'math-floor 'math-ceiling))))
+             (new-recipe (org-shoplist-recipe-*
+                          current-recipe
+                          (ignore-errors (/ (float new-factor) old-factor))
+                          (if (< new-factor old-factor) 'math-floor 'math-ceiling))))
 
-	(unless new-recipe (user-error "No ingredients to apply factor"))
-	;; replace current with new
-	(save-excursion
-	  (cl-mapc
-	   (lambda (new old)
-	     (search-forward (org-shoplist-ing-full-string old) nil t 1)
-	     (replace-match (org-shoplist-ing-full-string new) t))
-	   (org-shoplist-recipe-get-all-ing new-recipe)
-	   (org-shoplist-recipe-get-all-ing current-recipe)))))
+        (unless new-recipe (user-error "No ingredients to apply factor"))
+        ;; replace current with new
+        (save-excursion
+          (cl-mapc
+           (lambda (new old)
+             (search-forward (org-shoplist-ing-full-string old) nil t 1)
+             (replace-match (org-shoplist-ing-full-string new) t))
+           (org-shoplist-recipe-get-all-ing new-recipe)
+           (org-shoplist-recipe-get-all-ing current-recipe)))))
     (org-set-property org-shoplist-factor-property-name (number-to-string new-factor))))
 
 (defun org-shoplist-recipe-factor-down (&optional arg)
@@ -550,7 +555,7 @@ With a non-default prefix argument ARG, apply
 ingredients of (nested) recipes which are marked."
   (interactive "p")
   (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1- (org-shoplist--recipe-read-factor)))
-				      (org-shoplist--when-arg-return-keyword-else-nil arg))))
+                                      (org-shoplist--when-arg-return-keyword-else-nil arg))))
 
 (defun org-shoplist-recipe-factor-up (&optional arg)
   "Increment the factor-property of current header.
@@ -560,7 +565,7 @@ With a non-default prefix argument ARG, apply
 ingredients of (nested) recipes which are marked."
   (interactive "p")
   (save-excursion (org-shoplist-recipe-set-factor (ignore-errors (1+ (org-shoplist--recipe-read-factor)))
-				      (org-shoplist--when-arg-return-keyword-else-nil arg))))
+                                      (org-shoplist--when-arg-return-keyword-else-nil arg))))
 
 (defun org-shoplist--when-arg-return-keyword-else-nil (arg)
   "When ARG equals 1 return nil else ‘org-shoplist-explicit-keyword’."
@@ -572,7 +577,7 @@ ingredients of (nested) recipes which are marked."
   (org-search-view t org-shoplist-keyword))
 
 (defun org-eatplan-add-date (&optional with-time to-time from-string prompt
-				default-time default-input inactive)
+                                       default-time default-input inactive)
   "Add date to a recipe.
 Args are used for 'org-read-date'."
   (interactive "P")
@@ -589,38 +594,37 @@ Args are used for 'org-read-date'."
               (< 0 (length stars)))
         (re-search-backward (concat "^" (regexp-quote stars) " .+$") nil t 1)
         (setq stars (substring stars 1)))
-          (progn
-            (while (not (string= nil (org-entry-get (point) (concat org-shoplist-default-date-property-name (number-to-string i)))))
-              (setq i (+ i 1)))
-            (org-set-property (concat org-shoplist-default-date-property-name (number-to-string i))
-                              (concat "<" (org-read-date
-                                           with-time to-time from-string
-                                           prompt default-time default-input
-                                           inactive)
-                                      ">"))))))
+      (progn
+        (while (not (string= nil (org-entry-get (point) (concat org-shoplist-default-date-property-name (number-to-string i)))))
+          (setq i (+ i 1)))
+        (org-set-property (concat org-shoplist-default-date-property-name (number-to-string i))
+                          (concat "<" (org-read-date
+                                       with-time to-time from-string
+                                       prompt default-time default-input
+                                       inactive)
+                                  ">"))))))
 
 (defun org-eatplan ()
   "Generate a eatplan by current buffer."
   (interactive)
   (let ((day-numbers
-	 (with-temp-buffer
-	   (insert-file-contents "/home/lordnik/GoogleDrive/system/privat/food/food.org")
-	   (org-get-all-dates
-	    (point-min)
-	    (point-max)
-	    'no-ranges
-	    t
-	    nil)))
-	d entries)
+         (with-temp-buffer
+           (insert-file-contents "/home/lordnik/GoogleDrive/system/privat/food/food.org")
+           (org-get-all-dates
+            (point-min)
+            (point-max)
+            'no-ranges
+            t
+            nil)))
+        d entries)
     ;;get date for eatplan (org-shoplist-get-dates)
     ;; don’t numerate. name of property is equal name of eatplan
     ;; value of property is can be have multiple dates (order dosn’t matter,
-    
     (while (setq d (pop day-numbers))
       (setq entries
-	    (append entries
-		    (org-agenda-get-day-entries "/home/lordnik/GoogleDrive/system/privat/food/food.org"
-						(calendar-gregorian-from-absolute d)))))
+            (append entries
+                    (org-agenda-get-day-entries "/home/lordnik/GoogleDrive/system/privat/food/food.org"
+                                                (calendar-gregorian-from-absolute d)))))
     (org-agenda-add-time-grid-maybe entries (point) nil)
     (insert (mapconcat 'identity entries "\n"))
     ))
