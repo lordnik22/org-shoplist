@@ -344,27 +344,30 @@ Whenn ‘STR’ is nil read line where point is at."
           (apply #'org-shoplist-ing-aggregate read-ings)
         (reverse read-ings)))))
 
-(defun org-shoplist-recipe-create (name properties &rest ings)
+(defun org-shoplist-recipe-create (name factor &rest ings)
   "Create a recipe.
 ‘NAME’ must be a string.
-‘PROPERTIES’ is the result of (org-entry-properties) when read in buffer
+‘FACTOR’ which is set on the recipe
 ‘INGS’ must be valid ingredients.
 Use ‘org-shoplist-ing-create’ to create valid ingredients."
   (when (and (stringp name) (string= name "")) (user-error "Invalid name for recipe: ‘%s’" name))
+  (unless (or (null factor) (numberp factor))
+    (setq factor (condition-case nil (cl-parse-integer "")
+                   ('error (user-error "Invalid factor for recipe(%s): ‘%s’" name factor))) ))
   (when (listp (caar ings)) (setq ings (car ings)))
   (when (and name ings (not (equal ings '(nil))))
-    (list name ings)))
+    (list name factor ings)))
 
 (defun org-shoplist-recipe-name (recipe)
   "Get name of ‘RECIPE’."
   (car recipe))
 
-(defun org-shoplist-recipe-get-all-ing (recipe)
-  "Get all ingredients of ‘RECIPE’."
+(defun org-shoplist-recipe-factor (recipe)
+  "Get factor from ‘RECIPE’."
   (cadr recipe))
 
-(defun org-shoplist-recipe-properties (recipe)
-  "Get all properties on ‘RECIPE’."
+(defun org-shoplist-recipe-get-all-ing (recipe)
+  "Get all ingredients of ‘RECIPE’."
   (caddr recipe))
 
 (defun org-shoplist-recipe-* (recipe factor &optional round-func)
@@ -375,7 +378,7 @@ When ROUND-FUNC given round resulting amounts with it."
     (let (f-ing-list)
       (dolist (i (org-shoplist-recipe-get-all-ing recipe) f-ing-list)
         (push (org-shoplist-ing-* i factor round-func) f-ing-list))
-      (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (reverse f-ing-list)))))
+      (org-shoplist-recipe-create (org-shoplist-recipe-name recipe) (org-shoplist-recipe-factor recipe) (reverse f-ing-list)))))
 
 (defun org-shoplist--recipe-read-factor ()
   "Read the value of ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ in recipe where point is at."
@@ -415,6 +418,7 @@ recipes."
     (let ((read-ings (org-shoplist--recipe-read-all-ings explicit-match)))
       (org-shoplist-recipe-create
        (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
+       (save-excursion (org-shoplist--recipe-read-factor))
        (if aggregate (apply #'org-shoplist-ing-aggregate read-ings) read-ings)))))
 
 (defun org-shoplist-shoplist-create (&rest recipes)

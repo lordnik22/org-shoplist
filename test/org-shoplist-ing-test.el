@@ -332,14 +332,6 @@ Nuts)")
      (should (equal (list (org-shoplist-ing-create "100g" "Nuts"))
 		    (org-shoplist-ing-read nil "(Nuts 100g)"))))))
 
-(ert-deftest org-shoplist-test/ing-read-one-advanced-ing-invert ()
-  "Get ing when it’s double enclosed."
-  (org-shoplist-test-test
-   (lambda ()
-     (setq org-shoplist-ing-invert t)
-     (should (equal (list (org-shoplist-ing-create "100g" "other Nuts"))
-		    (org-shoplist-ing-read nil "(other Nuts 100g)"))))))
-
 (ert-deftest org-shoplist-test/ing-* ()
   "Test basic inputs to org-shoplist-ing-*."
   (should (equal '(user-error "Invalid ‘AMOUNT’(2*) for ingredient")

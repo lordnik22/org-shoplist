@@ -13,24 +13,28 @@
 (ert-deftest org-shoplist-test/shoplist-create-with-one-recipe ()
   "Get a shopping list containing one recipe."
   (should (equal (list (calendar-current-date)
-		       (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))
+		       (list (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))
 		       (list (org-shoplist-ing-create "200g" "Apple")))
-		 (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple"))))))
+		 (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple"))))))
 
 (ert-deftest org-shoplist-test/shoplist-create-with-two-recipes ()
   "Get a shopping list containing two recipe."
   (should (equal (list (calendar-current-date)
 		       (list (org-shoplist-recipe-create "Applepie"
+                                             nil
 					     (org-shoplist-ing-create "200g" "Apple"))
 			     (org-shoplist-recipe-create "Nut Salat"
+                                             nil
 					     (org-shoplist-ing-create "200g" "Nuts")
 					     (org-shoplist-ing-create "100g" "Salat")))
 		       (list (org-shoplist-ing-create "200g" "Apple")
 			     (org-shoplist-ing-create "200g" "Nuts")
 			     (org-shoplist-ing-create "100g" "Salat")))
 		 (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie"
+                                                   nil
 						   (org-shoplist-ing-create "200g" "Apple"))
 				   (org-shoplist-recipe-create "Nut Salat"
+                                                   nil
 						   (org-shoplist-ing-create "200g" "Nuts")
 						   (org-shoplist-ing-create "100g" "Salat"))))))
 
@@ -39,24 +43,28 @@
   "Get a shopping list containing one recipe that’s fully aggregated."
   (should (equal (list (calendar-current-date)
 		       (list (org-shoplist-recipe-create "Applepie"
+                                             nil
 					     (org-shoplist-ing-create "200g" "Apple")
 					     (org-shoplist-ing-create "200g" "Apple")))
 		       (list (org-shoplist-ing-create "400g" "Apple")))
 		 (org-shoplist-shoplist-create
 		  (org-shoplist-recipe-create "Applepie"
+                                  nil
 				  (org-shoplist-ing-create "200g" "Apple")
 				  (org-shoplist-ing-create "200g" "Apple"))))))
 
 (ert-deftest org-shoplist-test/shoplist-create-aggregate-two-diff-recipes-with-same-ings ()
   "Get a shopping list containing one recipe that’s fully aggregated."
   (should (equal (list (calendar-current-date)
-		       (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200ml" "Milk"))
-			     (org-shoplist-recipe-create "Nut Salat" (org-shoplist-ing-create "200ml" "Milk")))
+		       (list (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200ml" "Milk"))
+			     (org-shoplist-recipe-create "Nut Salat" nil (org-shoplist-ing-create "200ml" "Milk")))
 		       (list (org-shoplist-ing-create "400 ml" "Milk")))
 		 (org-shoplist-shoplist-create
 		  (org-shoplist-recipe-create "Applepie"
+                                  nil
 				  (org-shoplist-ing-create "200ml" "Milk"))
 		  (org-shoplist-recipe-create "Nut Salat"
+                                  nil
 				  (org-shoplist-ing-create "200ml" "Milk"))))))
 
 (ert-deftest org-shoplist-test/shoplist-creation-date-nil ()
@@ -68,14 +76,16 @@
   (should (equal (calendar-current-date)
 		 (org-shoplist-shoplist-creation-date
 		  (org-shoplist-shoplist-create (list (org-shoplist-recipe-create "Applepie"
+                                                          nil
 							  (org-shoplist-ing-create "200g" "Apple"))))))))
 
 (ert-deftest org-shoplist-test/shoplist-creation-date-get-current-date ()
   "Get current date when passing a shoplist which got created when test is executed."
   (should (equal (calendar-current-date) (org-shoplist-shoplist-creation-date
 					  (org-shoplist-shoplist-create (list
-					     (org-shoplist-recipe-create "Applepie"
-							     (org-shoplist-ing-create "200g" "Apple"))))))))
+                                                             (org-shoplist-recipe-create "Applepie"
+                                                                             nil
+                                                                             (org-shoplist-ing-create "200g" "Apple"))))))))
 
 (ert-deftest org-shoplist-test/shoplist-recipes-nil ()
   "From nothing comes nothing"
@@ -83,17 +93,17 @@
 
 (ert-deftest org-shoplist-test/shoplist-recipes-shoplist-with-one-recipe ()
   "Get all recipes "
-  (should (equal (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))
+  (should (equal (list (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))
 		 (org-shoplist-shoplist-recipes
-		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
+		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))))))
 
 (ert-deftest org-shoplist-test/shoplist-recipes-shoplist-with-two-recipe ()
   "From nothing comes nothing"
-  (should (equal (list (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple"))
-		       (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))
+  (should (equal (list (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple"))
+		       (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))
 		 (org-shoplist-shoplist-recipes
-		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple"))
-				    (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
+		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple"))
+				    (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))))))
 
 
 (ert-deftest org-shoplist-test/shoplist-ings-nil ()
@@ -104,21 +114,21 @@
   "Get all recipes "
   (should (equal (list (org-shoplist-ing-create "200g" "Apple"))
 		 (org-shoplist-shoplist-ings
-		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
+		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))))))
 
 (ert-deftest org-shoplist-test/shoplist-ings-shoplist-with-two-recipe-and-diff-ing ()
   "From nothing comes nothing"
   (should (equal (list (org-shoplist-ing-create "200ml" "Cream") (org-shoplist-ing-create "200g" "Apple"))
 		 (org-shoplist-shoplist-ings
-		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200ml" "Cream"))
-				    (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
+		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200ml" "Cream"))
+				    (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))))))
 
 (ert-deftest org-shoplist-test/shoplist-ings-shoplist-with-two-recipe ()
   "From nothing comes nothing"
   (should (equal (list (org-shoplist-ing-create "400g" "Apple"))
 		 (org-shoplist-shoplist-ings
-		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple"))
-				    (org-shoplist-recipe-create "Applepie" (org-shoplist-ing-create "200g" "Apple")))))))
+		  (org-shoplist-shoplist-create (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple"))
+				    (org-shoplist-recipe-create "Applepie" nil (org-shoplist-ing-create "200g" "Apple")))))))
 
 
 (ert-deftest org-shoplist-test/shoplist-read-nil ()
@@ -151,6 +161,7 @@ Für die Sauce brauchen wir:
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create
 		     (org-shoplist-recipe-create "Rezept 1"
+                                     nil
 				     (org-shoplist-ing-create "200g" "Nuts")
 				     (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read nil))))))
@@ -166,7 +177,7 @@ Für die Sauce brauchen wir:
 * Rezept 2
 - (200g Nuts)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 1" (org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 1" nil (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-only-one-marked-recipe-after-non-marked ()
@@ -181,6 +192,7 @@ Für die Sauce brauchen wir:
 - (200g Nuts)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2"
+                                                      nil
 						      (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read))))))
 
@@ -196,8 +208,10 @@ Für die Sauce brauchen wir:
 - (200g Nuts)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 1"
+                                                      nil
 						      (org-shoplist-ing-create "200g" "Nuts"))
 				      (org-shoplist-recipe-create "Rezept 2"
+                                                      nil
 						      (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read))))))
 
@@ -216,10 +230,13 @@ Für die Sauce brauchen wir:
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create
 		     (org-shoplist-recipe-create "Rezept 1"
+                                     nil
 				     (org-shoplist-ing-create "200ml" "Milk"))
 		     (org-shoplist-recipe-create "Rezept 2"
+                                     nil
 				     (org-shoplist-ing-create "200g" "Nuts"))
 		     (org-shoplist-recipe-create "Rezept 3"
+                                     nil
 				     (org-shoplist-ing-create "2tsp" "Butter")))
 		    (org-shoplist-shoplist-read))))))
 
@@ -236,7 +253,7 @@ Für die Sauce brauchen wir:
 * Rezept 3
 - (2tsp Butter)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" nil (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-shoplist-read))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-aggregate-duplicate-ings-in-one-recipe ()
@@ -247,6 +264,6 @@ Für die Sauce brauchen wir:
 - (200g Nuts)
 - (200g Nuts)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "400g" "Nuts")))
+     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" nil (org-shoplist-ing-create "400g" "Nuts")))
 		    (org-shoplist-shoplist-read t))))))
 ;;; org-shoplist-test.el ends here

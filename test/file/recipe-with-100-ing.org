@@ -1,7 +1,4 @@
 * Recipe 1
-  :PROPERTIES:
-  :FACTOR:   1
-  :END:
 - (1g Nuts)
 - (1g Nuts)
 - (1g Nuts)

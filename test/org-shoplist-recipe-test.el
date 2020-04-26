@@ -8,49 +8,69 @@
 
 (ert-deftest org-shoplist-test/recipe-create-nil ()
   "From nothing comes nothing."
-  (should (eq nil (org-shoplist-recipe-create nil))))
+  (should (eq nil (org-shoplist-recipe-create nil nil))))
 
 (ert-deftest org-shoplist-test/recipe-create-empty-string-name ()
   "Should error when passing no name for recipe."
   (should (equal '(user-error "Invalid name for recipe: ‘’")
-		 (should-error (org-shoplist-recipe-create "")))))
-
+		 (should-error (org-shoplist-recipe-create "" nil)))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-ing-nil ()
   "Create no recipe when there are no ingredients."
-  (should (equal nil (org-shoplist-recipe-create "Nut Salat"))))
+  (should (equal nil (org-shoplist-recipe-create "Nut Salat" nil))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-one-ing ()
   "Create a recipe with one ingredient."
-  (should (equal (list "Nut Salat" (list (org-shoplist-ing-create "100g" "Nuts")))
-		 (org-shoplist-recipe-create "Nut Salat" (org-shoplist-ing-create "100g" "Nuts")))))
+  (should (equal (list "Nut Salat" nil (list (org-shoplist-ing-create "100g" "Nuts")))
+		 (org-shoplist-recipe-create "Nut Salat" nil (org-shoplist-ing-create "100g" "Nuts")))))
+
+(ert-deftest org-shoplist-test/recipe-create-factor-nil-one-ing ()
+  "Create a recipe with factor nil."
+  (should (equal (list "Nut Salat" nil (list (org-shoplist-ing-create "100g" "Nuts")))
+		 (org-shoplist-recipe-create "Nut Salat" nil (org-shoplist-ing-create "100g" "Nuts")))))
+
+(ert-deftest org-shoplist-test/recipe-create-factor-empty-string-one-ing ()
+  "Should error when factor not number."
+  (should (equal '(user-error "Invalid factor for recipe(Nut Salat): ‘’")
+		 (should-error (org-shoplist-recipe-create "Nut Salat" "" (org-shoplist-ing-create "100g" "Nuts"))))))
+
+(ert-deftest org-shoplist-test/recipe-create-factor-number-string-one-ing ()
+  "Should error when factor number in string."
+  (should (equal '(user-error "Invalid factor for recipe(Nut Salat): ‘2’")
+		 (should-error (org-shoplist-recipe-create "Nut Salat" "2" (org-shoplist-ing-create "100g" "Nuts"))))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-two-ing ()
   "Create a recipe with two ingredients."
   (should (equal (list "Nut Salat"
+                       nil
 		       (list (org-shoplist-ing-create "100g" "Nuts")
 			     (org-shoplist-ing-create "100g" "Nuts")))
 		 (org-shoplist-recipe-create "Nut Salat"
+                          nil
 			  (org-shoplist-ing-create "100g" "Nuts")
 			  (org-shoplist-ing-create "100g" "Nuts")))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-two-diff-ing ()
   "Create a recipe with two different ingredients."
   (should (equal (list "Nut Salat"
+                       nil
 		       (list (org-shoplist-ing-create "100g" "Nuts")
 			     (org-shoplist-ing-create "200g" "Salat")))
 		 (org-shoplist-recipe-create "Nut Salat"
+                          nil
 			  (org-shoplist-ing-create "100g" "Nuts")
 			  (org-shoplist-ing-create "200g" "Salat")))))
 
 (ert-deftest org-shoplist-test/recipe-create-normal-name-three-diff-ing ()
   "Create a recipe with three different ingredients."
   (should (equal (list "Nut Salat"
+                       nil
 		       (list
 			(org-shoplist-ing-create "100g" "Nuts")
 			(org-shoplist-ing-create "200g" "Salat")
 			(org-shoplist-ing-create "1tsp" "Pepper")))
 		 (org-shoplist-recipe-create "Nut Salat"
+                          nil
 			  (org-shoplist-ing-create "100g" "Nuts")
 			  (org-shoplist-ing-create "200g" "Salat")
 			  (org-shoplist-ing-create "1tsp" "Pepper")))))
@@ -58,14 +78,15 @@
 (ert-deftest org-shoplist-test/recipe-create-passing-list-of-ings ()
   "Create a recipe with by passing a list of ingredients."
   (should (equal (list "Nut Salat"
+                       nil
 		   (list (org-shoplist-ing-create "100g" "Nuts")
 			 (org-shoplist-ing-create "200g" "Salat")
 			 (org-shoplist-ing-create "1tsp" "Pepper")))
 		 (org-shoplist-recipe-create "Nut Salat"
-				 (list
-				  (org-shoplist-ing-create "100g" "Nuts")
-				  (org-shoplist-ing-create "200g" "Salat")
-				  (org-shoplist-ing-create "1tsp" "Pepper"))))))
+                          nil
+                          (list (org-shoplist-ing-create "100g" "Nuts")
+                                (org-shoplist-ing-create "200g" "Salat")
+                                (org-shoplist-ing-create "1tsp" "Pepper"))))))
 
 (ert-deftest org-shoplist-test/recipe-read-empty-buffer ()
   "Throw an error when buffer is empty."
@@ -101,7 +122,7 @@
      (insert "* Test
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Test" (list (org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (org-shoplist-recipe-create "Test" nil (list (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
 (ert-deftest org-shoplist-test/recipe-read-all-two-ing ()
@@ -113,6 +134,7 @@
 - (200g Nuts) mahlen")
      (goto-char (point-min))
      (should (equal (org-shoplist-recipe-create "Test"
+                             nil
 			     (list (org-shoplist-ing-create "200g" "Nuts")
 				   (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read)))
@@ -127,7 +149,7 @@ Full means with unit, amount and ing-name."
      (insert "* Test
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test" (list (org-shoplist-ing-create "200g" "Nuts")))
+     (should (equal (list "Test" nil (list (org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
 
 (ert-deftest org-shoplist-test/recipe-read-two-ing ()
@@ -139,7 +161,7 @@ Full means with unit, amount and ing-name."
 - (200g Nuts) mahlen
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test"
+     (should (equal (list "Test" nil
 			  (list (org-shoplist-ing-create "200g" "Nuts")
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
@@ -154,7 +176,7 @@ Full means with unit, amount and ing-name."
 - (200g Nuts) mahlen
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test"
+     (should (equal (list "Test" nil
 		      (list (org-shoplist-ing-create "200g" "Nuts")
 			    (org-shoplist-ing-create "200g" "Nuts")
 			    (org-shoplist-ing-create "200g" "Nuts")))
@@ -171,7 +193,7 @@ Trash means any text that contains no ingredient."
 *Sauce:*
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test"
+     (should (equal (list "Test" nil
 			  (list (org-shoplist-ing-create "200g" "Nuts")
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
@@ -187,7 +209,7 @@ Trash means any text that contains no ingredient."
 Achtung: doppelt!
 - (200g Nuts) mahlen")
      (goto-char (point-min))
-     (should (equal (list "Test"
+     (should (equal (list "Test" nil
 			  (list (org-shoplist-ing-create "200g" "Nuts")
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
@@ -204,7 +226,7 @@ Für die Sauce brauchen wir:
 - (200g Nuts)
 * Rezept 2")
      (goto-char (point-min))
-     (should (equal (list "Rezept 1"
+     (should (equal (list "Rezept 1" nil
 			  (list (org-shoplist-ing-create "200g" "Nuts")
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
@@ -221,7 +243,7 @@ Für die Sauce brauchen wir:
 * Rezept 2
 - (200g Flour)")
      (goto-char (point-min))
-     (should (equal (list "Rezept 1"
+     (should (equal (list "Rezept 1" nil
 			  (list (org-shoplist-ing-create "200g" "Nuts")
 				(org-shoplist-ing-create "200g" "Nuts")))
 		    (org-shoplist-recipe-read))))))
@@ -233,7 +255,7 @@ Für die Sauce brauchen wir:
      (setq org-shoplist-explicit-keyword nil)
      (insert-file-contents "./file/recipe-with-100-ing.org")
      (goto-char (point-min))
-     (should (equal (list "Recipe 1"
+     (should (equal (list "Recipe 1" nil
 			  (list (org-shoplist-ing-create "100g" "Nuts")))
 		    (org-shoplist-recipe-read t))))))
 
@@ -261,7 +283,7 @@ Die (100g Nuts) (200ml
  Milk) (100g
 Salad) mahlen.")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Rezept 1"
+     (should (equal (org-shoplist-recipe-create "Rezept 1" nil
 			     (org-shoplist-ing-create "100g" "Nuts" " ")
 			     (org-shoplist-ing-create "200ml" "Milk" "\n ")
 			     (org-shoplist-ing-create "100g" "Salad" "\n"))
@@ -273,8 +295,8 @@ Salad) mahlen.")
 
 (ert-deftest org-shoplist-test/recipe-*-recipe-factor-nil ()
   "Return the same recipe when factor is nil."
-  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts"))
-		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts")) nil))))
+  (should (equal (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "400g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "400g" "Nuts")) nil))))
 
 (ert-deftest org-shoplist-test/recipe-*-recipe-nil-factor-2 ()
   "From nothing comes nothing."
@@ -282,20 +304,20 @@ Salad) mahlen.")
 
 (ert-deftest org-shoplist-test/recipe-*-2-200g ()
   "Multiply all ingredients of recipe by given factor. "
-  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "400g" "Nuts"))
-		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "200g" "Nuts")) 2))))
+  (should (equal (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "400g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "200g" "Nuts")) 2))))
 
 (ert-deftest org-shoplist-test/recipe-*-2/3-200g ()
   "Multiply all ingredients of recipe by given factor. "
-  (should (equal (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "133.g" "Nuts"))
-		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" (org-shoplist-ing-create "200g" "Nuts")) (/ 2.0 3)))))
+  (should (equal (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "133.g" "Nuts"))
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" nil (org-shoplist-ing-create "200g" "Nuts")) (/ 2.0 3)))))
 
 (ert-deftest org-shoplist-test/recipe-*-2/3-200g ()
   "Multiply all ingredients of recipe by given factor. "
-  (should (equal (org-shoplist-recipe-create "Test"
+  (should (equal (org-shoplist-recipe-create "Test" nil
 			  (org-shoplist-ing-create "200g" "Nuts")
 			  (org-shoplist-ing-create "400ml" "Milk"))
-		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test"
+		 (org-shoplist-recipe-* (org-shoplist-recipe-create "Test" nil
 			      (org-shoplist-ing-create "100g" "Nuts")
 			      (org-shoplist-ing-create "200ml" "Milk"))
 		     2))))
@@ -309,7 +331,7 @@ Salad) mahlen.")
 ** More ingredients
 - (200g Nuts)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Rezept 2" (org-shoplist-ing-create "200g" "Nuts"))
+     (should (equal (org-shoplist-recipe-create "Rezept 2" nil (org-shoplist-ing-create "200g" "Nuts"))
 		    (org-shoplist-recipe-read nil t))))))
 
 (ert-deftest org-shoplist-test/recipe-explict-keyword-read-one-marked-subheading ()
@@ -322,7 +344,7 @@ Salad) mahlen.")
 ** " org-shoplist-keyword " More ingredients
 - (200g Nuts)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Rezept 2"
+     (should (equal (org-shoplist-recipe-create "Rezept 2" nil
 			     (org-shoplist-ing-create "200g" "Nuts")
 			     (org-shoplist-ing-create "200g" "Nuts"))
 		    (org-shoplist-recipe-read))))))
@@ -340,7 +362,7 @@ Salad) mahlen.")
 ** " org-shoplist-keyword " Other ingredients 2
 - (200g Apple)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Rezept 2"
+     (should (equal (org-shoplist-recipe-create "Rezept 2" nil
 			     (org-shoplist-ing-create "200g" "Nuts")
 			     (org-shoplist-ing-create "200g" "Salt")
 			     (org-shoplist-ing-create "200g" "Apple"))
@@ -359,16 +381,16 @@ Salad) mahlen.")
 ** Other ingredients 2
 - (200g Apple)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-recipe-create "Rezept 2"
+     (should (equal (org-shoplist-recipe-create "Rezept 2" nil
 			     (org-shoplist-ing-create "200g" "Nuts")
 			     (org-shoplist-ing-create "200g" "Salt"))
 		    (org-shoplist-recipe-read nil t))))))
 
 
-(ert-deftest org-shoplist-test/factor-up-ones-buffer-empty ()
+(ert-deftest org-shoplist-test/factor-up-buffer-empty ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
-     (should (equal '(user-error "Not in recipe")
+     (should (equal '(user-error "Recipe not found")
 		    (should-error (org-shoplist-recipe-factor-up)))))))
 
 (ert-deftest org-shoplist-test/factor-up-ones-header-no-property ()
@@ -412,32 +434,6 @@ Salad) mahlen.")
   :" org-shoplist-factor-property-name ":   6
   :END:
 - (600g Nuts)"))))))
-
-(ert-deftest org-shoplist-test/factor-up-and-down-five-times-same-amount ()
-  (org-shoplist-test-test-in-org-buffer
-   (lambda ()
-     (insert "* Test Header
-  :PROPERTIES:
-  :" org-shoplist-factor-property-name ":   1
-  :END:
-- (100g Nuts)")
-     (goto-char (point-min))
-     (org-shoplist-recipe-factor-up)
-     (org-shoplist-recipe-factor-up)
-     (org-shoplist-recipe-factor-up)
-     (org-shoplist-recipe-factor-up)
-     (org-shoplist-recipe-factor-up)
-     (org-shoplist-recipe-factor-down)
-     (org-shoplist-recipe-factor-down)
-     (org-shoplist-recipe-factor-down)
-     (org-shoplist-recipe-factor-down)
-     (org-shoplist-recipe-factor-down)
-     (should (string= (buffer-string)
-		      (concat "* Test Header
-  :PROPERTIES:
-  :" org-shoplist-factor-property-name ":   1
-  :END:
-- (100g Nuts)"))))))
 
 (ert-deftest org-shoplist-test/factor-up-and-down-ten-times-same-amount ()
   (org-shoplist-test-test-in-org-buffer
@@ -693,6 +689,7 @@ Nuts)")))
 (ert-deftest org-shoplist-test/factor-up-1-2-nested-header-with-factor-prop ()
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-explicit-keyword nil)
      (insert "* Test Header
   :PROPERTIES:
   :" org-shoplist-factor-property-name ":   1
