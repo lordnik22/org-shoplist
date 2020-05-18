@@ -29,8 +29,8 @@ Enclose the ingredients with `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char`. Simple examples for ingredients: 
 `(200g nuts), (1 nut), (1 big nut)`
 
-If you would like to have the ingredient name before amount (and unit)
-set `org-shoplist-ing-invert` to a non-nil value.
+EXPERIMENTAL: If you would like to have the ingredient name before
+amount (and unit) set `org-shoplist-ing-invert` to a non-nil value.
 
 Structure:
 1. `org-shoplist-ing-start-char` (default: '(')

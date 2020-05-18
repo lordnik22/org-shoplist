@@ -43,12 +43,12 @@
      (should (string= "100gal" (org-shoplist--ing-transform-amount "100 gal")))
      (should (string= "2390m^3" (org-shoplist--ing-transform-amount "2390 m^3")))
      (should (string= "2.39m^3" (org-shoplist--ing-transform-amount "2390e-3 m^3")))
-     (should (string= "0.024m^3" (org-shoplist--ing-transform-amount "23.90e-3 m^3")))
+     (should (string= "0.024m^3" (org-shoplist--ing-transform-amount "23.90e-3 m^3" 'math-ceiling)))
      (should (string= "35" (org-shoplist--ing-transform-amount "12+23")))
      (should (string= "24" (org-shoplist--ing-transform-amount "12*2")))
      (should (string= "24mg" (org-shoplist--ing-transform-amount "12mg*2")))
      (should (string= "21pwerg" (org-shoplist--ing-transform-amount "21pwerg")))
-     (should (string= "20000g" (org-shoplist--ing-transform-amount "20000.0000002g"))))))
+     (should (string= "20000g" (org-shoplist--ing-transform-amount "20000.0000002g" 'math-floor))))))
 
 (ert-deftest org-shoplist-test/transform-amount-error-test ()
   "Test if error is thown when passing invalid amounts"
@@ -338,14 +338,14 @@ Nuts)")
 		 (should-error (org-shoplist-ing-* nil 2))))
   (org-shoplist-test-test
    (lambda ()
-     (setq org-shoplist-precision 3)
+     (setq org-shoplist-precision nil)
      (should (equal (org-shoplist-ing-create 0 "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create 100 "Nuts") 0)))
      (should (equal (org-shoplist-ing-create "0g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 0)))
      (should (equal (org-shoplist-ing-create "100g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1)))
      (should (equal (org-shoplist-ing-create "200g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 2)))
      (should (equal (org-shoplist-ing-create "150g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.5)))
-     (should (equal (org-shoplist-ing-create "133.333g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'math-ceiling)))
-     (should (equal (org-shoplist-ing-create "133.333g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'math-floor))))))
+     (should (equal (org-shoplist-ing-create "134g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'math-ceiling)))
+     (should (equal (org-shoplist-ing-create "133g" "Nuts") (org-shoplist-ing-* (org-shoplist-ing-create "100g" "Nuts") 1.3333333 'math-floor))))))
 
 
 (ert-deftest org-shoplist-test/ing-+-nil ()
