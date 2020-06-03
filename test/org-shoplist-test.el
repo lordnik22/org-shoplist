@@ -118,6 +118,7 @@
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* " org-shoplist-keyword " Rezept 1" "
 Die (200g Nuts) mahlen.
 Für die Sauce brauchen wir:
@@ -134,6 +135,7 @@ Für die Sauce brauchen wir:
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* " org-shoplist-keyword " Rezept 1" "
 Die (200g Nuts) mahlen.
 Nuts haben einen hohen Protain gehalt.
@@ -148,6 +150,7 @@ Für die Sauce brauchen wir:
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* Rezept 1
 Die (200g Nuts) mahlen.
 Nuts haben einen hohen Protain gehalt.
@@ -162,6 +165,7 @@ Für die Sauce brauchen wir:
   "Read the marked recipes."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* " org-shoplist-keyword " Rezept 1" "
 Die (200g Nuts) mahlen.
 Nuts haben einen hohen Protain gehalt.
@@ -169,14 +173,17 @@ Für die Sauce brauchen wir:
 * " org-shoplist-keyword " Rezept 2
 - (200g Nuts)")
      (goto-char (point-min))
-     (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
-				      (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
+     (should (equal (org-shoplist-shoplist-create
+                     (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
+                     (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
 		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-three-diff-marked-recipes ()
   "Read the marked recipes."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (setq org-shoplist-explicit-keyword nil)
      (insert "* " org-shoplist-keyword " Rezept 1" "
 Die (200ml Milk) mahlen.
 Nuts haben einen hohen Protain gehalt.
@@ -187,15 +194,16 @@ Für die Sauce brauchen wir:
 - (2tsp Butter)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create
-		     (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200ml" "Milk")))
-		     (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
-		     (org-shoplist-recipe-create "Rezept 3" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "2tsp" "Butter"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+                     (org-shoplist-recipe-create "Rezept 3" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "2tsp" "Butter")))
+                     (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
+                     (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200ml" "Milk"))))
+                    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-one-marked-inbetween-two-non-marked-recipes ()
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* Rezept 1
 Die (200ml Milk) mahlen.
 Nuts haben einen hohen Protain gehalt.
@@ -212,6 +220,7 @@ Für die Sauce brauchen wir:
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
+     (setq org-shoplist-inital-factor nil)
      (insert "* " org-shoplist-keyword " Rezept 2
 - (200g Nuts)
 - (200g Nuts)")

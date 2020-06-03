@@ -104,6 +104,43 @@ Danach 15min köcheln lassen.
 ```
 You can also have nested headers (See [Explicitness](#Explicitness)).
 
+#### Factor ####
+A recipe can have a factor-property. With the factor-property you can define
+the amount of people or portion the recipe is written for. The property is
+controllable with `(org-shoplist-factor-up)` and
+`(org-shoplist-factor-down)`. This property affects not only ingredients of
+the current recipe but also all ingrdients in the underlying tree. Headers
+with no ingredients aren't affected and [Explicitness](#Explicitness) has no
+effect on these functions.
+
+Example:
+```
+* TOBUY Älpämagerone
+  :PROPERTIES:
+  :FACTOR:   2
+  :END:
+- (500ml Rahm)
+- (2 Zwiebel)
+- (500g Magrone)
+- (500g Emmentalerkäse)
+```
+
+### Customization ###
+`org-shoplist-inital-factor` defines the default factor when no
+factor-property is set. 
+
+With `org-shoplist-factor-property-name` you can define the property-name to
+your taste.
+## Shopping List ##
+A shopping list is a collection of ingredients, collected from the
+marked recipes.
+
+You can generate a shopping list by pressing `M-x org-shoplist RET` in
+your org-file where recipes with the `org-shoplist-keyword` are
+present. 
+
+With `C-u M-x org-shoplist ENT` you can pass an other
+formatter-function, also see [Format](#Format).
 ### Customization ###
 #### Explicitness ####
 There are two behaviors depending on `org-shoplist-explicit-keyword`
@@ -132,17 +169,6 @@ flakes and chocolate but without vanilla.
 ** with vanilla
 - (250ml vanilla)
 ```
-## Shopping List ##
-A shopping list is a collection of ingredients, collected from the
-marked recipes.
-
-You can generate a shopping list by pressing `M-x org-shoplist RET` in
-your org-file where recipes with the `org-shoplist-keyword` are
-present. 
-
-With `C-u M-x org-shoplist ENT` you can pass an other
-formatter-function, also see [Format](#Format).
-### Customization ###
 #### Aggregation ####
 You can turn off aggregation by setting `org-shoplist-aggregate` to
 nil.
@@ -151,8 +177,15 @@ The format is established by a function which takes a shopping list as
 it's arguments. The defualt format is defined by
 `org-shoplist-default-format`. If you are interested in writing your
 own shoppinglist-formating-function, you may find it helpful reading
-the functions `org-shoplist-shoplist-as-table` or
-`org-shoplist-shoplist-as-todo-list` in org-shoplist.el. After evaling
-your function you can inject them when calling `org-shoplist`.
+the built-in formatter-functions in in org-shoplist.el.
+
+Following formats are provided in this package:
+- org-shoplist-shoplist-as-table
+- org-shoplist-shoplist-as-todo-list
+- org-shoplist-shoplist-as-recipe-list
+
+You can try them out by calling `org-shoplist` with `C-u`. Example with
+org-shoplist-shoplist-as-recipe-list:
+```C-u M-x org-shoplist org-shoplist-shoplist-as-recipe-list```
 ## Other Customization ##
 Press `M-x customize-group org-shoplist ENT` for all custom variables.

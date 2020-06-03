@@ -6,6 +6,12 @@
 (load (concat default-directory "../org-shoplist.el"))
 (require 'org-shoplist)
 
+(defun org-shoplist-test-load-default-env ()
+  "Set all cusotm var to there default."
+  (setq org-shoplist-inital-factor 1)
+  (setq org-shoplist-ing-start-char "(")
+  (setq org-shoplist-ing-end-char ")"))
+
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
 
@@ -14,6 +20,7 @@
         "./org-shoplist-recipe-test.el"
         "./org-shoplist-test.el"))
 
+(org-shoplist-test-load-default-env)
 (defvar org-shoplist-test-backup-vars
   (list (cons org-shoplist-keyword 'org-shoplist-keyword)
         (cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
