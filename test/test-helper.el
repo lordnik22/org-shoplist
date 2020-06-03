@@ -6,29 +6,39 @@
 (load (concat default-directory "../org-shoplist.el"))
 (require 'org-shoplist)
 
+(defun org-shoplist-test-load-default-env ()
+  "Set all cusotm var to there default."
+  (setq org-shoplist-inital-factor 1)
+  (setq org-shoplist-ing-start-char "(")
+  (setq org-shoplist-ing-end-char ")"))
+
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
 
 (defvar org-shoplist-test-files
   (list "./org-shoplist-ing-test.el"
-	"./org-shoplist-recipe-test.el"
-	"./org-shoplist-test.el"))
+        "./org-shoplist-recipe-test.el"
+        "./org-shoplist-test.el"))
 
+(org-shoplist-test-load-default-env)
 (defvar org-shoplist-test-backup-vars
   (list (cons org-shoplist-keyword 'org-shoplist-keyword)
-	(cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
-	(cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
-	(cons org-shoplist-additional-units 'org-shoplist-additional-units)
-	(cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
-	(cons org-shoplist-ing-end-char 'org-shoplist-ing-end-char)
-	(cons math-additional-units 'math-additional-units)
-	(cons org-shoplist-table-header 'org-shoplist-table-header)
-	(cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
-	(cons org-shoplist-default-format 'org-shoplist-default-format)
-	(cons math-simplifying-units 'math-simplifying-units)
-	(cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)
-	(cons org-shoplist-auto-add-unit 'org-shoplist-auto-add-unit)
-	(cons org-shoplist-ing-invert 'org-shoplist-ing-invert)))
+        (cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
+        (cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
+        (cons org-shoplist-additional-units 'org-shoplist-additional-units)
+        (cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
+        (cons org-shoplist-ing-end-char 'org-shoplist-ing-end-char)
+        (cons math-additional-units 'math-additional-units)
+        (cons org-shoplist-table-header 'org-shoplist-table-header)
+        (cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
+        (cons org-shoplist-factor-explicit-keyword 'org-shoplist-factor-explicit-keyword)
+        (cons org-shoplist-default-format 'org-shoplist-default-format)
+        (cons math-simplifying-units 'math-simplifying-units)
+        (cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)
+        (cons org-shoplist-auto-add-unit 'org-shoplist-auto-add-unit)
+        (cons org-shoplist-ing-invert 'org-shoplist-ing-invert)
+        (cons org-shoplist-precision 'org-shoplist-precision)
+        (cons org-shoplist-inital-factor 'org-shoplist-inital-factor)))
 
 (defun org-shoplist-test-load-custom-var ()
   "Make a save state of the current values of the custom variables."
@@ -55,7 +65,7 @@
 'FUNC' is what should be done in the temp-buffer."
   (unwind-protect
       (progn (org-shoplist-test-load-custom-var)
-	     (funcall func))
+             (funcall func))
     (org-shoplist-test-reset-custom-var)))
 
 (defun org-shoplist-test-test-in-buffer (func-in-buffer)
@@ -64,8 +74,8 @@
   (org-shoplist-test-test
    (lambda ()
      (unwind-protect
-	 (with-current-buffer (get-buffer-create org-shoplist-test-default-buffer)
-	   (funcall func-in-buffer))
+         (with-current-buffer (get-buffer-create org-shoplist-test-default-buffer)
+           (funcall func-in-buffer))
        (kill-buffer org-shoplist-test-default-buffer)))))
 
 (defun org-shoplist-test-test-in-org-buffer (func-in-org-buffer)

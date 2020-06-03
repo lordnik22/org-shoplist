@@ -1,3 +1,18 @@
+* TOBUY Other Recipe
+  :PROPERTIES:
+  :FACTOR:   10
+  :END:
+- (250g Nuts)
+- (120g Salad)
+- (170ml Sauce)
+* TOBUY Simple Recipe
+  :PROPERTIES:
+  :FACTOR:   1
+  :END:
+- (100g Nuts)
+- (10g Salad)
+- (10ml Sauce)
+
 * Muffins - Basisrezept
 | 200 g    | Mehl                               |
 | 2 TL     | Dr. Oetker Backpulver , gestrichen |
@@ -18,18 +33,21 @@ geeignet. Sie können mit unserem Dr. Oetker Fondant, den Dr. Oetker
 Streudekoren, verschiedenen Toppings und Frostings oder ganz klassisch
 mit Puderzucker verziert werden.
 * Rotes Thai-Curry
-(1 PäckliThai-Mix), davon je (1 cm Ingwer) und (1cm Galgant),
-geschält, einige Pfefferkörner, abgezupft, (1 roter Chili), entkernt,
-(1 Stängel Zitronengras), Inneres in Stücken (1 Knoblauchzehe) alles
-im Cutter fein hacken (1 EL Erdnussöl) im Wok oder in grosser
+  :PROPERTIES:
+  :FACTOR:   7
+  :END:
+(8 PäckliThai-Mix), davon je (8 cm Ingwer) und (8cm Galgant),
+geschält, einige Pfefferkörner, abgezupft, (8 roter Chili), entkernt,
+(8 Stängel Zitronengras), Inneres in Stücken (8 Knoblauchzehe) alles
+im Cutter fein hacken (8 EL Erdnussöl) im Wok oder in grosser
 Bratpfanne heiss werden lassen, Gewürzmischung ca. 2 Min. rührbraten
-(4 Mini-Maiskolben), quer halbiert Auberginen, geviertelt (4
-Erbsen-Auberginen), abgezupft (3 Okras), längs halbiert alles
-beigeben, ca. 3 Min. weiterrührbraten (5 dl Kokosmilch) dazugiessen (4
-Kaffirlimetten-Blätter), gequetscht (1 EL rote Curry-Paste) beigeben,
-Hitze reduzieren, zugedeckt ca. 10 Min. köcheln (400 g Pouletbrüstli),
+(29 Mini-Maiskolben), quer halbiert Auberginen, geviertelt (29
+Erbsen-Auberginen), abgezupft (22 Okras), längs halbiert alles
+beigeben, ca. 3 Min. weiterrührbraten (36 dl Kokosmilch) dazugiessen (29
+Kaffirlimetten-Blätter), gequetscht (8 EL rote Curry-Paste) beigeben,
+Hitze reduzieren, zugedeckt ca. 10 Min. köcheln (2801 g Pouletbrüstli),
 schräg in ca. 3 mm breiten Streifen beigeben, ca. 5 Min. ziehen lassen
-Mit (1 EL Fischsauce), (0.25 TL Salz) und (1 TL Zucker) würzen,
+Mit (8 EL Fischsauce), (6 TL Salz) und (8 TL Zucker) würzen,
 Kaffirlimetten-Blätter herausnehmen
 ** Zusatzinformationen
 - Dazu passt: Basmati-, Parfüm-, Jasminreis oder asiatische
