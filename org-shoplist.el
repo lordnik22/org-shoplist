@@ -39,17 +39,9 @@
   "Keyword to mark recipes for shopping."
   :type 'string)
 
-(defcustom org-shoplist-default-date-property-name "EATDATE"
-  "EXPERIMENTAL: Property-Key to add a eatdate-property for a recipe."
-  :type 'string)
-
 (defcustom org-shoplist-factor-property-name "FACTOR"
   "Property-name for factor-calculations on headers."
   :type 'string)
-
-(defcustom org-shoplist-table-header (list "Ingredient" "Amount")
-  "EXPERIMENTAL: Defines the columns of an ingredient table."
-  :type '(repeat string))
 
 (defcustom org-shoplist-additional-units nil
   "Additional personal units which are needed for recipes with special units.
@@ -69,11 +61,6 @@ the shoplist."
 (defcustom org-shoplist-aggregate t
   "When non-nil will aggregate the ingredients of the generated shoplist.
 When nil won’t aggregate."
-  :type 'boolean)
-
-(defcustom org-shoplist-ing-invert nil
-  "EXPERIMENTAL: When non-nil, handle ingredient name first, amount second.
-When nil, handle amount first, name second"
   :type 'boolean)
 
 (defcustom org-shoplist-ing-start-char "("
@@ -129,14 +116,6 @@ When nil and factor is changed, will throw an error in the sense:
 
 (defconst org-shoplist--ing-optional-content-spliter-regex "\\([[:space:]]*\\)"
   "A regex which matches whitespace that may occur thats splits data of ingredient.")
-
-(defconst org-shoplist-ing-regex-invert
-  '(concat (regexp-quote org-shoplist-ing-start-char)
-           (eval org-shoplist--ing-second-part-regex)
-           (eval org-shoplist--ing-content-spliter-regex)
-           (eval org-shoplist--ing-first-part-regex)
-           (regexp-quote org-shoplist-ing-end-char))
-  "EXPERIMENTAL: Match an invert ingredient.")
 
 (defconst org-shoplist-ing-regex
   '(concat (regexp-quote org-shoplist-ing-start-char)
@@ -254,16 +233,19 @@ If one constraint isn’t met, throw error."
 (defun org-shoplist-ing-content-string (ing)
   "Return ‘ING’ in following format: “amount name”.
 When ORG-SHOPLIST-ING-INVERT is non-nil will return ”name amount”."
-  (if org-shoplist-ing-invert
-      (concat (org-shoplist-ing-name ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-amount ing))
-    (concat (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing))))
+  (concat
+   (org-shoplist-ing-amount ing)
+   (org-shoplist-ing-separator ing)
+   (org-shoplist-ing-name ing)))
 
 (defun org-shoplist-ing-full-string (ing)
   "Return ‘ING’ in following format: “(amount name)”.
 When ORG-SHOPLIST-ING-INVERT is non-nil will return ”(name amount)”."
-  (if org-shoplist-ing-invert
-      (concat org-shoplist-ing-start-char (org-shoplist-ing-name ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-amount ing) org-shoplist-ing-end-char)
-    (concat org-shoplist-ing-start-char (org-shoplist-ing-amount ing) (org-shoplist-ing-separator ing) (org-shoplist-ing-name ing) org-shoplist-ing-end-char)))
+  (concat org-shoplist-ing-start-char
+          (org-shoplist-ing-amount ing)
+          (org-shoplist-ing-separator ing)
+          (org-shoplist-ing-name ing)
+          org-shoplist-ing-end-char))
 
 (defun org-shoplist-ing-+ (&rest amounts)
   "Add ‘AMOUNTS’ together and return the sum."
@@ -319,24 +301,18 @@ given, round resulting amount(quotient)."
 ‘STR’ is a string to search for ingredients.
 ‘START-POS’ is where to start searching in ‘STR’.
 ‘INGS’ is a list found ingredients."
-  (if (string-match (if org-shoplist-ing-invert (eval org-shoplist-ing-regex-invert) (eval org-shoplist-ing-regex))
-                    str
-                    start-pos)
+  (if (string-match
+       (eval org-shoplist-ing-regex)
+       str
+       start-pos)
       (org-shoplist--ing-read-loop
        str
        (match-end 0)
-       (if org-shoplist-ing-invert
-           (cons (org-shoplist-ing-create
-                  (match-string 3 str)
-                  (match-string 1 str)
-                  (match-string 2 str))
-                 ings)
-         (cons (org-shoplist-ing-create
-                (match-string 1 str)
-                (match-string 3 str)
-                (match-string 2 str))
-               ings)))
-
+       (cons (org-shoplist-ing-create
+              (match-string 1 str)
+              (match-string 3 str)
+              (match-string 2 str))
+             ings))
     ings))
 
 (defun org-shoplist--ing-concat-when-broken (str last-pos)
@@ -589,9 +565,10 @@ When something is wrong will throw an error.
 
 (defun org-shoplist-shoplist-as-table (shoplist)
   "Format ‘SHOPLIST’ as table."
-  (concat "|" (mapconcat 'identity org-shoplist-table-header "|")
+  (concat "|" (mapconcat 'identity (list "Ingredient" "Amount") "|")
           "|\n"
-          (mapconcat (lambda (i) (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
+          (mapconcat (lambda (i)
+                       (concat "|" (org-shoplist-ing-name i) "|" (org-shoplist-ing-amount i)))
                      (org-shoplist-shoplist-ings shoplist)
                      "|\n")
           "|\n"))
