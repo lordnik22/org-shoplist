@@ -5,6 +5,7 @@
 (require 'calc-units)
 (load (concat default-directory "../org-shoplist.el"))
 (require 'org-shoplist)
+(setq org-todo-keywords (append org-todo-keywords (list (list 'sequence org-shoplist-keyword "BOUGHT"))))
 
 (defun org-shoplist-test-load-default-env ()
   "Set all cusotm var to there default."
@@ -23,14 +24,12 @@
 (org-shoplist-test-load-default-env)
 (defvar org-shoplist-test-backup-vars
   (list (cons org-shoplist-keyword 'org-shoplist-keyword)
-        (cons org-shoplist-ing-unit-regex 'org-shoplist-ing-unit-regex)
         (cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
         (cons org-shoplist-additional-units 'org-shoplist-additional-units)
         (cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
         (cons org-shoplist-ing-end-char 'org-shoplist-ing-end-char)
         (cons math-additional-units 'math-additional-units)
         (cons org-shoplist-explicit-keyword 'org-shoplist-explicit-keyword)
-        (cons org-shoplist-factor-explicit-keyword 'org-shoplist-factor-explicit-keyword)
         (cons org-shoplist-default-format 'org-shoplist-default-format)
         (cons math-simplifying-units 'math-simplifying-units)
         (cons org-shoplist-ing-default-separator 'org-shoplist-ing-default-separator)
