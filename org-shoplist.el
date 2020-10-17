@@ -622,6 +622,7 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
+;;;###autoload
 (defun org-shoplist-init ()
   "Setting the todo-keywords for current file."
   (interactive)
@@ -630,6 +631,7 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
     (unless (looking-at-p "#\\+SEQ_TODO:") (insert "#\\+SEQ_TODO: " org-shoplist-keyword))
     (funcall #'org-mode)))
 
+;;;###autoload
 (defun org-shoplist-unmark-all ()
   "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
   (interactive)
@@ -639,6 +641,7 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
     (while (re-search-forward (concat " " org-shoplist-keyword) nil t)
       (replace-match "" nil nil))))
 
+;;;###autoload
 (defun org-shoplist-recipe-set-factor (factor)
   "Set ‘FACTOR’ with property-name ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ on current recipe."
   (interactive "NValue: ")
@@ -680,20 +683,17 @@ When ‘ORG-SHOPLIST-INITAL-FACTOR’ nil and a recipe has no factor will throw 
          (save-excursion (org-shoplist-recipe-replace (car recipe-list))))
        (setq recipe-list (cdr recipe-list))))))
 
+;;;###autoload
 (defun org-shoplist-factor-down ()
   "Decrement the factor-property of current header."
   (interactive)
   (save-excursion (org-shoplist-recipe-change-factor -1)))
 
+;;;###autoload
 (defun org-shoplist-factor-up ()
   "Increment the factor-property of current header."
   (interactive)
   (save-excursion (org-shoplist-recipe-change-factor 1)))
-
-(defun org-shoplist-overview ()
-  "An overview of the current recipes you added."
-  (interactive)
-  (org-search-view t org-shoplist-keyword))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here
