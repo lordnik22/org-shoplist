@@ -231,16 +231,22 @@ If one constraint isn’t met, throw error."
             (if (null separator) org-shoplist-ing-default-separator separator)))))
 
 (defun org-shoplist-ing-content-string (ing)
-  "Return ‘ING’ in following format: “amount name”.
-When ORG-SHOPLIST-ING-INVERT is non-nil will return ”name amount”."
+  "Return ‘ING’ in following format: “amount name”."
   (concat
    (org-shoplist-ing-amount ing)
    (org-shoplist-ing-separator ing)
    (org-shoplist-ing-name ing)))
 
+(defun org-shoplist-ing-content-string-invert (ing)
+  "Return ‘ING’ in following format: “name amount”."
+  (concat
+   (org-shoplist-ing-name ing)
+   (org-shoplist-ing-separator ing)
+   (org-shoplist-ing-amount ing)))
+
+
 (defun org-shoplist-ing-full-string (ing)
-  "Return ‘ING’ in following format: “(amount name)”.
-When ORG-SHOPLIST-ING-INVERT is non-nil will return ”(name amount)”."
+  "Return ‘ING’ in following format: “(amount name)”."
   (concat org-shoplist-ing-start-char
           (org-shoplist-ing-amount ing)
           (org-shoplist-ing-separator ing)
@@ -577,7 +583,7 @@ When something is wrong will throw an error.
   "Format ‘SHOPLIST’ as todo-list."
   (concat
    (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
-   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string i)))
+   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string-invert i)))
               (org-shoplist-shoplist-ings shoplist)
               "\n")))
 
