@@ -26,7 +26,7 @@ For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
-`org-shoplist-ing-end-char`. Simple examples for ingredients: 
+`org-shoplist-ing-end-char`. Simple examples for ingredients:
 `(200g nuts), (1 nut), (1 big nut)`
 
 Structure:
@@ -39,7 +39,7 @@ Structure:
 ### Unit ###
 For calculating with units the calc-package is used. You can use any
 unit by default that is listed in the calc-unit-table (`M-x
-calc-view-units-table`). 
+calc-view-units-table ENT`).
 
 For additional units:
 - If you are lazy just set (`M-x customize-variable ENT
@@ -67,7 +67,7 @@ An example, adding the german equivalent of Tablespoon(tbsp):
 
 For "ground-units" (a unit that can't be expressed by a finner/lower
 unit) use nil as definition: `((myUnit nil "*My Special unit"))` or
-just let org-shoplist add thee definitions for you by setting `org-shoplist-auto-add-unit`.
+just let org-shoplist add these definitions for you by setting `org-shoplist-auto-add-unit`.
 
 Circular definitions lead to errors: `((myUnit "myUnit" "*My Special unit"))`
 
@@ -77,11 +77,11 @@ aggregated together when `org-shoplist-aggregate` is non-nil (default).
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
 ever you want. Important is that you format your ingredients
-properly. (See [Ingredients](#Ingredients))
+properly (See [Ingredients](#Ingredients)).
 
-If you really need your parentheses, (See [Enclosing](#Enclosing))
+If you really need your parentheses, (See [Enclosing](#Enclosing)).
 
-A "marked recipe" is a org-header with the `org-shoplist-keyword`. 
+A "marked recipe" is a org-header with the `org-shoplist-keyword`.
 Example: `* TOBUY Älpämagerone`
 
 Some Examples of recipes:
@@ -102,13 +102,13 @@ Danach 15min köcheln lassen.
 You can also have nested headers (See [Explicitness](#Explicitness)).
 
 #### Factor ####
-A recipe can have a factor-property. With the factor-property you can define
-the amount of people or portion the recipe is written for. The property is
-controllable with `(org-shoplist-factor-up)` and
-`(org-shoplist-factor-down)`. This property affects not only ingredients of
-the current recipe but also all ingrdients in the underlying tree. Headers
-with no ingredients aren't affected and [Explicitness](#Explicitness) has no
-effect on these functions.
+A recipe can have a factor-property. With the factor-property you can
+define the amount of people or portion the recipe is written for. The
+property is controllable with `(org-shoplist-factor-up)` and
+`(org-shoplist-factor-down)`. This property affects not only
+ingredients of the current header-level but also all ingrdients in the
+underlying tree. Headers with no ingredients aren't affected and
+[Explicitness](#Explicitness) is ignored for these functions.
 
 Example:
 ```
@@ -124,7 +124,7 @@ Example:
 
 ### Customization ###
 `org-shoplist-inital-factor` defines the default factor when no
-factor-property is set. 
+factor-property is set on the header.
 
 With `org-shoplist-factor-property-name` you can define the property-name to
 your taste.
@@ -134,16 +134,16 @@ marked recipes.
 
 You can generate a shopping list by pressing `M-x org-shoplist RET` in
 your org-file where recipes with the `org-shoplist-keyword` are
-present. 
+present.
 
 With `C-u M-x org-shoplist ENT` you can pass an other
 formatter-function, also see [Format](#Format).
 ### Customization ###
 #### Explicitness ####
 There are two behaviors depending on `org-shoplist-explicit-keyword`
-(by defualt it's nil). 
+(by defualt it's nil).
 
-When nil, all ingredients of nested headers are included. 
+When nil, all ingredients of nested headers are included.
 ```
 * TOBUY Älpämagerone
 - (250g Magrone)
@@ -151,8 +151,8 @@ When nil, all ingredients of nested headers are included.
 - (1 Zwiebel)
 ** Part 2
 - (250ml Rahm)
-- (250g Emmentalerkäse) 
-``` 
+- (250g Emmentalerkäse)
+```
 
 When non-nil, only the headers with the `org-shoplist-keyword` are
 included in the shopping list. In this example we have a cream with
@@ -174,7 +174,7 @@ The format is established by a function which takes a shopping list as
 it's arguments. The defualt format is defined by
 `org-shoplist-default-format`. If you are interested in writing your
 own shoppinglist-formating-function, you may find it helpful reading
-the built-in formatter-functions in in org-shoplist.el.
+the built-in formatter-functions in org-shoplist.el.
 
 Following formats are provided in this package:
 - org-shoplist-shoplist-as-table
@@ -183,6 +183,6 @@ Following formats are provided in this package:
 
 You can try them out by calling `org-shoplist` with `C-u`. Example with
 org-shoplist-shoplist-as-recipe-list:
-```C-u M-x org-shoplist org-shoplist-shoplist-as-recipe-list```
+```C-u M-x org-shoplist ENT org-shoplist-shoplist-as-recipe-list ENT```
 ## Other Customization ##
 Press `M-x customize-group org-shoplist ENT` for all custom variables.
