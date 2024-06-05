@@ -5,13 +5,13 @@
 (require 'calc-units)
 (load (concat default-directory "../org-shoplist.el"))
 (require 'org-shoplist)
-(setq org-todo-keywords (append org-todo-keywords (list (list 'sequence org-shoplist-keyword "BOUGHT"))))
 
 (defun org-shoplist-test-load-default-env ()
   "Set all cusotm var to there default."
-  (setq org-shoplist-inital-factor 1)
-  (setq org-shoplist-ing-start-char "(")
-  (setq org-shoplist-ing-end-char ")"))
+  (setq org-shoplist-inital-factor 1
+	org-shoplist-ing-start-char "("
+	org-shoplist-ing-end-char ")"
+	org-todo-keywords (append org-todo-keywords (list (list 'sequence org-shoplist-keyword "BOUGHT")))))
 
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")

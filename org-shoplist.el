@@ -95,6 +95,25 @@ When nil and factor is changed, will throw an error in the sense:
 ‘inital factor not set’"
   :type 'integer)
 
+(defcustom org-shoplist-files 'org-agenda-files
+  "Files to be used to scan for recipes creating a shoplist.
+
+When value is equal 'org-agenda-files will use the same files and stay in sync with the org-agenda-files
+
+When value is equal 'current-buffer will always use the current-buffer.
+
+If the value is a symbol, will read the symbol value and use it.
+
+If the value of the variable is not a list but a single file name, then
+the list of agenda files is actually stored and maintained in that file,
+one agenda file per line.  In this file paths can be given relative to
+`org-directory'.  Tilde expansion and environment variable substitution
+are also made."
+  :type '(choice
+	  (symbol :tag "Use same value as given symbol.")
+	  (repeat :tag "List of files and directories" file)
+	  (file :tag "Store list in a file\n" :value "~/.shoplist_files")))
+
 (defconst org-shoplist--ing-first-part-regex
   '(format "\\([^%s%s]+?[^[:space:]%s%s]?\\)"
            (regexp-quote org-shoplist-ing-start-char)
@@ -231,22 +250,16 @@ If one constraint isn’t met, throw error."
             (if (null separator) org-shoplist-ing-default-separator separator)))))
 
 (defun org-shoplist-ing-content-string (ing)
-  "Return ‘ING’ in following format: “amount name”."
+  "Return ‘ING’ in following format: “amount name”.
+When ORG-SHOPLIST-ING-INVERT is non-nil will return ”name amount”."
   (concat
    (org-shoplist-ing-amount ing)
    (org-shoplist-ing-separator ing)
    (org-shoplist-ing-name ing)))
 
-(defun org-shoplist-ing-content-string-invert (ing)
-  "Return ‘ING’ in following format: “name amount”."
-  (concat
-   (org-shoplist-ing-name ing)
-   (org-shoplist-ing-separator ing)
-   (org-shoplist-ing-amount ing)))
-
-
 (defun org-shoplist-ing-full-string (ing)
-  "Return ‘ING’ in following format: “(amount name)”."
+  "Return ‘ING’ in following format: “(amount name)”.
+When ORG-SHOPLIST-ING-INVERT is non-nil will return ”(name amount)”."
   (concat org-shoplist-ing-start-char
           (org-shoplist-ing-amount ing)
           (org-shoplist-ing-separator ing)
@@ -553,21 +566,63 @@ When ‘REPLACEMENT-RECIPE’ is nil, won’t replace the recipe."
   "Get recipes of ‘SHOPLIST’."
   (caddr shoplist))
 
-(defun org-shoplist-shoplist-read (ing-read-func &optional aggregate)
+(defun org-shoplist-shoplist-read (content-provider ing-read-func &optional aggregate)
   "Parse current buffer and return a shoplist.
 When something is wrong will throw an error.
-‘AGGREGATE’ ingredients when non-nil.
-‘ING-READ-FUNC’ function which collects the ingedient in that given way."
+
+‘CONTENT-PROVIDER’ is a buffer, a list of files or a file-path
+which content contains file-paths. ‘ING-READ-FUNC’ function which
+collects the ingredients of a recipe in that given way. ‘AGGREGATE’ ingredients
+when non-nil."
   (let ((recipe-list
 	 (save-match-data
-	   (let ((recipe-list nil))
+	   (let ((file-or-buffer-name nil)
+		 (recipe-list nil)
+		 (content-provider-list
+		  (cond
+		   ((stringp content-provider) (org-read-shoplist-file-list content-provider))
+		   ((bufferp content-provider) (list (get-buffer content-provider)))
+		   ((listp content-provider) content-provider)
+		   (t (error "Invalid value of ‘org-shoplist-files’")))))
+	     (while (setq file-or-buffer-name (pop content-provider-list))
+	       (with-current-buffer
+		   (cond ((bufferp file-or-buffer-name) file-or-buffer-name)
+			 ((and (stringp file-or-buffer-name) (file-exists-p file-or-buffer-name))
+			  (org-find-base-buffer-visiting file-or-buffer-name))
+			 (t (error "No such file or buffer %s" file-or-buffer-name)))
+		 (goto-char (point-min))
+		 (while (and (not (= (point-max) (point)))
+			     (search-forward-regexp org-heading-regexp nil t 1))
+		   (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
+		     (beginning-of-line 1)
+		     (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))))
 	     (while (and (not (= (point-max) (point)))
 			 (search-forward-regexp org-heading-regexp nil t 1))
 	       (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
 		 (beginning-of-line 1)
-         (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))
+		 (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))
 	     recipe-list))))
     (apply #'org-shoplist-shoplist-create (reverse recipe-list))))
+
+(defun org-read-shoplist-file-list (file &optional pair-with-expansion)
+  "See ‘org-read-agenda-file-list’. Not fixed to the variable org-agenda-files.
+Convert the content of ‘FILE’ to a list of files.
+If ‘PAIR-WITH-EXPANSION’ is t return pairs with un-expanded
+filenames, used by ‘org-store-new-agenda-file-list’ to write back
+un-expanded file names."
+  (when (file-directory-p file)
+    (error "‘file’ cannot be a single directory"))
+  (when (stringp file)
+    (with-temp-buffer
+      (insert-file-contents file)
+      (mapcar
+       (lambda (f)
+	 (let ((e (expand-file-name (substitute-in-file-name f)
+				    org-directory)))
+	   (if pair-with-expansion
+	       (cons e f)
+	     e)))
+       (org-split-string (buffer-string) "[ \t\r\n]*?[\r\n][ \t\r\n]*")))))
 
 (defun org-shoplist-shoplist-as-table (shoplist)
   "Format ‘SHOPLIST’ as table."
@@ -583,7 +638,7 @@ When something is wrong will throw an error.
   "Format ‘SHOPLIST’ as todo-list."
   (concat
    (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
-   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string-invert i)))
+   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string i)))
               (org-shoplist-shoplist-ings shoplist)
               "\n")))
 
@@ -620,15 +675,19 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
         (sl
          (save-excursion
            (goto-char (point-min))
-           (org-shoplist-shoplist-read (if org-shoplist-explicit-keyword
-                               'org-shoplist--recipe-read-ings-keyword-tree
-                             'org-shoplist--recipe-read-ings-tree)
+           (org-shoplist-shoplist-read
+	    (cond ((eq org-shoplist-files 'org-agenda-files) (org-agenda-files t 'ifmode))
+		  ((eq org-shoplist-files 'current-buffer) (current-buffer))
+		  ((symbolp org-shoplist-files)) (eval org-shoplist-files)
+		  (t org-shoplist-files))
+	    (if org-shoplist-explicit-keyword
+                'org-shoplist--recipe-read-ings-keyword-tree
+              'org-shoplist--recipe-read-ings-tree)
                            org-shoplist-aggregate))))
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
 
-;;;###autoload
 (defun org-shoplist-init ()
   "Setting the todo-keywords for current file."
   (interactive)
@@ -637,7 +696,6 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
     (unless (looking-at-p "#\\+SEQ_TODO:") (insert "#\\+SEQ_TODO: " org-shoplist-keyword))
     (funcall #'org-mode)))
 
-;;;###autoload
 (defun org-shoplist-unmark-all ()
   "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
   (interactive)
@@ -647,7 +705,6 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
     (while (re-search-forward (concat " " org-shoplist-keyword) nil t)
       (replace-match "" nil nil))))
 
-;;;###autoload
 (defun org-shoplist-recipe-set-factor (factor)
   "Set ‘FACTOR’ with property-name ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ on current recipe."
   (interactive "NValue: ")
@@ -689,17 +746,20 @@ When ‘ORG-SHOPLIST-INITAL-FACTOR’ nil and a recipe has no factor will throw 
          (save-excursion (org-shoplist-recipe-replace (car recipe-list))))
        (setq recipe-list (cdr recipe-list))))))
 
-;;;###autoload
 (defun org-shoplist-factor-down ()
   "Decrement the factor-property of current header."
   (interactive)
   (save-excursion (org-shoplist-recipe-change-factor -1)))
 
-;;;###autoload
 (defun org-shoplist-factor-up ()
   "Increment the factor-property of current header."
   (interactive)
   (save-excursion (org-shoplist-recipe-change-factor 1)))
+
+(defun org-shoplist-overview ()
+  "An overview of the current recipes you added."
+  (interactive)
+  (org-search-view t org-shoplist-keyword))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

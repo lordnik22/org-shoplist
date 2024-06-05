@@ -112,7 +112,7 @@
 
 (ert-deftest org-shoplist-test/shoplist-read-nil ()
   "From nothing comes nothing"
-  (should (equal nil (org-shoplist-shoplist-read nil))))
+  (should (equal nil (org-shoplist-shoplist-read (current-buffer) nil))))
 
 (ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe ()
   "Read the recipe which is marked."
@@ -129,7 +129,7 @@ Für die Sauce brauchen wir:
                                      nil
                                      'org-shoplist--recipe-read-ings-tree
 				     (list (org-shoplist-ing-create "200g" "Nuts") (org-shoplist-ing-create "200g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-only-one-marked-recipe ()
   "Read the recipe which is marked."
@@ -144,7 +144,7 @@ Für die Sauce brauchen wir:
 - (200g Nuts)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-only-one-marked-recipe-after-non-marked ()
   "Read the recipe which is marked."
@@ -159,7 +159,7 @@ Für die Sauce brauchen wir:
 - (200g Nuts)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-two-marked-recipes ()
   "Read the marked recipes."
@@ -176,7 +176,7 @@ Für die Sauce brauchen wir:
      (should (equal (org-shoplist-shoplist-create
                      (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
                      (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-three-diff-marked-recipes ()
   "Read the marked recipes."
@@ -197,7 +197,7 @@ Für die Sauce brauchen wir:
                      (org-shoplist-recipe-create "Rezept 3" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "2tsp" "Butter")))
                      (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts")))
                      (org-shoplist-recipe-create "Rezept 1" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200ml" "Milk"))))
-                    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+                    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-one-marked-inbetween-two-non-marked-recipes ()
   "Read the recipe which is marked."
@@ -214,7 +214,7 @@ Für die Sauce brauchen wir:
 - (2tsp Butter)")
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree (list (org-shoplist-ing-create "200g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
 
 (ert-deftest org-shoplist-test/shoplist-read-aggregate-duplicate-ings-in-one-recipe ()
   "Read the recipe which is marked."
@@ -227,5 +227,46 @@ Für die Sauce brauchen wir:
      (goto-char (point-min))
      (should (equal (org-shoplist-shoplist-create (org-shoplist-recipe-create "Rezept 2" nil 'org-shoplist--recipe-read-ings-tree
                                                       (list (org-shoplist-ing-create "400g" "Nuts"))))
-		    (org-shoplist-shoplist-read 'org-shoplist--recipe-read-ings-tree t))))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree t))))))
+
+(ert-deftest org-shoplist-test/shoplist-read-from-two-files ()
+  "Read the recipe which are marked a cross two files."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (should (equal (org-shoplist-shoplist-create
+		     (org-shoplist-recipe-create "Different Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "170ml" "Honey")))
+		     (org-shoplist-recipe-create "Other Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "250g" "Nuts"))))
+		    (org-shoplist-shoplist-read (list "./file/multi-file-1.org" "./file/multi-file-2.org")  'org-shoplist--recipe-read-ings-tree t))))))
+
+(ert-deftest org-shoplist-test/shoplist-read-three-files-and-aggregate ()
+  "Read the recipe which are marked a cross three files and
+aggregate similar ingredients."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (should (equal (org-shoplist-shoplist-create
+		     (org-shoplist-recipe-create "Another Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "70ml" "Honey")))
+		     (org-shoplist-recipe-create "Different Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "170ml" "Honey")))
+		     (org-shoplist-recipe-create "Other Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "250g" "Nuts"))))
+		    (org-shoplist-shoplist-read (list "./file/multi-file-1.org" "./file/multi-file-2.org" "./file/multi-file-3.org") 'org-shoplist--recipe-read-ings-tree t))))))
+
+(ert-deftest org-shoplist-test/shoplist-read-two-files-dont-aggregate-recipes ()
+  "Read the recipe which are marked a cross two files and
+don’t aggregate recipes with same only ingredients."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (should (equal (org-shoplist-shoplist-create
+		     (org-shoplist-recipe-create "Other Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "250g" "Nuts")))
+		     (org-shoplist-recipe-create "Other Recipe" nil 'org-shoplist--recipe-read-ings-tree
+                                     (list (org-shoplist-ing-create "250g" "Nuts"))))
+		    (org-shoplist-shoplist-read (list "./file/multi-file-1.org" "./file/multi-file-1.org") 'org-shoplist--recipe-read-ings-tree t))))))
+
 ;;; org-shoplist-test.el ends here

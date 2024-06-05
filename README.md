@@ -13,7 +13,7 @@ in your init-file:
 (require 'org-shoplist)
 ```
 ### Your first Shoplist ###
-- Create a new file or use an existing one
+- Create a new file or use one of your `org-agenda-files`
 - Add a recipe (See [Recipes](#Recipes) for some examples)
 - Mark your recipe (org-headers) for buying with `org-shoplist-keyword`
 - Press `M-x org-shoplist ENT`
@@ -84,7 +84,7 @@ If you really need your parentheses, (See [Enclosing](#Enclosing)).
 A "marked recipe" is a org-header with the `org-shoplist-keyword`.
 Example: `* TOBUY Älpämagerone`
 
-Some Examples of recipes:
+### Example ###
 - As a list:
 ```
 * TOBUY Älpämagerone
@@ -93,7 +93,7 @@ Some Examples of recipes:
 - (250g Magrone)
 - (250g Emmentalerkäse)
 ```
-- Or as a german description:
+- As a german description:
 ```
 * TOBUY Älpämagerone 2
 Nimm (250ml Rahm) und (1 Zwiebel) vermische es mit (250g Magrone) und (250g Emmentalerkäse).
@@ -129,8 +129,9 @@ factor-property is set on the header.
 With `org-shoplist-factor-property-name` you can define the property-name to
 your taste.
 ## Shopping List ##
-A shopping list is a collection of ingredients, collected from the
-marked recipes.
+A shopping list is a collection of ingredients, generated from the
+marked recipes. The marked recipes are read from `org-shoplist-files`
+which by default is the same as `org-agenda-files`.
 
 You can generate a shopping list by pressing `M-x org-shoplist RET` in
 your org-file where recipes with the `org-shoplist-keyword` are

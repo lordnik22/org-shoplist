@@ -530,9 +530,9 @@ Nuts)")))
    (lambda ()
      (setq org-shoplist-inital-factor 1)
      (insert "* Test Header
-  :PROPERTIES:
-  :" org-shoplist-factor-property-name ":   1
-  :END:
+:PROPERTIES:
+:" org-shoplist-factor-property-name ":   1
+:END:
 - (100g Nuts)
 ** other Test-Header
 - (100g Nuts)")
@@ -541,14 +541,14 @@ Nuts)")))
      (org-shoplist-factor-up)
      (should (string= (buffer-string)
 		      (concat"* Test Header
-  :PROPERTIES:
-  :" org-shoplist-factor-property-name ":   2
-  :END:
+:PROPERTIES:
+:" org-shoplist-factor-property-name ":   2
+:END:
 - (200g Nuts)
 ** other Test-Header
-   :PROPERTIES:
-   :" org-shoplist-factor-property-name ":   2.0
-   :END:
+:PROPERTIES:
+:" org-shoplist-factor-property-name ":   2.0
+:END:
 - (200g Nuts)")))
      (should (= (point) (point-min))))))
 
