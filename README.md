@@ -6,12 +6,20 @@ eating-plans. (We talk about delicious food — nothing technical).
 ### Installation ###
 Melpa: `M-x package-install ENT org-shoplist ENT`
 
+
+Use-package with straight:
+```emacs-lisp
+(use-package org-shoplist
+  :straight (org-shoplist :type git :host github :repo "lordnik22/org-shoplist"))
+```
+
 Alternatively you can clone this project and add it to the load-path
 in your init-file:
 ```
 (add-to-list 'load-path "~/.emacs.d/elisp/org-shoplist")
 (require 'org-shoplist)
 ```
+
 ### Your first Shoplist ###
 - Create a new file or use one of your `org-agenda-files`
 - Add a recipe (See [Recipes](#Recipes) for some examples)
