@@ -114,12 +114,48 @@
   "From nothing comes nothing"
   (should (equal nil (org-shoplist-shoplist-read (current-buffer) nil))))
 
-(ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe ()
+(ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe-via-keyword ()
   "Read the recipe which is marked."
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (setq org-shoplist-inital-factor nil)
      (insert "* " org-shoplist-keyword " Rezept 1" "
+Die (200g Nuts) mahlen.
+Für die Sauce brauchen wir:
+- (200g Nuts)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-shoplist-create
+		     (org-shoplist-recipe-create "Rezept 1"
+                                     nil
+                                     'org-shoplist--recipe-read-ings-tree
+				     (list (org-shoplist-ing-create "200g" "Nuts") (org-shoplist-ing-create "200g" "Nuts"))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
+
+(ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe-via-tag ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (setq org-shoplist-search-type (list 'tag "recipe"))
+     (insert "* TODO Rezept 1 :recipe:
+Die (200g Nuts) mahlen.
+Für die Sauce brauchen wir:
+- (200g Nuts)")
+     (goto-char (point-min))
+     (should (equal (org-shoplist-shoplist-create
+		     (org-shoplist-recipe-create "Rezept 1"
+                                     nil
+                                     'org-shoplist--recipe-read-ings-tree
+				     (list (org-shoplist-ing-create "200g" "Nuts") (org-shoplist-ing-create "200g" "Nuts"))))
+		    (org-shoplist-shoplist-read (current-buffer) 'org-shoplist--recipe-read-ings-tree))))))
+
+(ert-deftest org-shoplist-test/shoplist-read-one-marked-recipe-via-keyword-plus-tag ()
+  "Read the recipe which is marked."
+  (org-shoplist-test-test-in-org-buffer
+   (lambda ()
+     (setq org-shoplist-inital-factor nil)
+     (setq org-shoplist-search-type (list 'keyword+tag "ZU_KAUFEN" "rezept"))
+     (insert "* ZU_KAUFEN Rezept 1 :rezept:
 Die (200g Nuts) mahlen.
 Für die Sauce brauchen wir:
 - (200g Nuts)")

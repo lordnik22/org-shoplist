@@ -356,7 +356,7 @@ Salad) mahlen.")
   (org-shoplist-test-test-in-org-buffer
    (lambda ()
      (setq org-shoplist-inital-factor nil)
-     (insert "* " org-shoplist-keyword " Rezept 2
+     (insert "* " (org-shoplist--search-type-keyword-value) " Rezept 2
 - (200g Nuts)
 ** More ingredients
 - (200g Nuts)")

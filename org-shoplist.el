@@ -35,9 +35,16 @@
   "Default name of buffer when generating a shopping list."
   :type 'string)
 
-(defcustom org-shoplist-keyword "TOBUY"
-  "Keyword to mark recipes for shopping."
-  :type 'string)
+(defcustom org-shoplist-search-type (list 'keyword "TOBUY")
+  "Following strategies are valid:
+- keyword: Detect org-headers for buying which are marked with specified keyword.
+- tag: Detect org-headers for buying which have the specified tag plus
+are marked with one not-done-keyword.
+- keyword+tag: Detect org-headers for buying which are marked with specified keyword plus have the specified tag."
+  :type '(choice
+	  (list (symbol tag) (string))
+	  (list (symbol keyword) (string))
+	  (list (symbol keyword+tag) (string) (string))))
 
 (defcustom org-shoplist-factor-property-name "FACTOR"
   "Property-name for factor-calculations on headers."
@@ -110,7 +117,7 @@ one agenda file per line.  In this file paths can be given relative to
 `org-directory'.  Tilde expansion and environment variable substitution
 are also made."
   :type '(choice
-	  (symbol :tag "Use same value as given symbol.")
+	  (symbol :tag "Use same value as given symbol. 'current-buffer and 'org-agenda-files will be handled specially.")
 	  (repeat :tag "List of files and directories" file)
 	  (file :tag "Store list in a file\n" :value "~/.shoplist_files")))
 
@@ -468,11 +475,12 @@ Must be in a recipe, else throw ‘(user-error)’."
         (beginning-of-line 2))
       ing-list)))
 
-(defun org-shoplist--recipe-read-ings-marked-tree (mark)
+(defun org-shoplist--recipe-read-ings-marked-tree (marks tag)
   "Collect all ingredients of recipe and marked tree.
-Underlying headers are collected when they have ‘MARK’ as
-todo-state.
-‘MARK’ must be a string that represent the todo state."
+Underlying headers are collected when they have ‘MARKS’ as
+todo-state and are tagged with ‘TAG’.
+‘MARKS’ must be a list of strings that represent the todo-state.
+‘TAG’ must be a string."
   (save-match-data
     (let ((ing-list nil)
           (h (org-get-heading)) ;current header
@@ -481,7 +489,8 @@ todo-state.
       (while (and (or (string= h (org-get-heading))
                       (> (org-current-level) l))
                   (not (>= (point) (point-max))))
-        (if (string= (org-get-todo-state) mark)
+        (if (and (member (org-get-todo-state) marks)
+		 (or (null tag) (member tag (org-get-tags))))
             (setq ing-list (append ing-list (org-shoplist-ing-read))))
         (beginning-of-line 2))
       ing-list)))
@@ -502,9 +511,23 @@ so on are included in the result."
         (beginning-of-line 2))
       ing-list)))
 
+(defun org-shoplist--search-type-tag-value ()
+  "Read tag-value from ‘org-shoplist-search-type’."
+  (let ((strat (car org-shoplist-search-type)))
+    (cond ((eq strat 'tag) (cadr org-shoplist-search-type))
+	  ((eq strat 'keyword) nil)
+	  ((eq strat 'keyword+tag) (caddr org-shoplist-search-type)))))
+
+(defun org-shoplist--search-type-keyword-value ()
+  "Read keyword-value from ‘org-shoplist-search-type’."
+  (let ((strat (car org-shoplist-search-type)))
+    (when (or (eq strat 'keyword) (eq strat 'keyword+tag)) (cadr org-shoplist-search-type))))
+
 (defun org-shoplist--recipe-read-ings-keyword-tree ()
-  "Collect all ingredients of recipe and underlying tree marked with ‘ORG-SHOPLIST-KEYWORD’."
-  (org-shoplist--recipe-read-ings-marked-tree org-shoplist-keyword))
+  "Collect all ingredients of recipe and underlying tree which marked with keyword and tag from ‘org-shoplist-search-type’."
+  (org-shoplist--recipe-read-ings-marked-tree
+   (or (list (org-shoplist--search-type-keyword-value)) org-not-done-keywords)
+   (org-shoplist--search-type-tag-value)))
 
 (defun org-shoplist-recipe-read (ing-read-func &optional aggregate)
   "Return a recipe structure or throw error.
@@ -521,7 +544,11 @@ See ‘(org-shoplist-recipe-create)’ for more details on creating general reci
     (let ((factor (save-match-data (save-excursion (org-shoplist--recipe-read-factor))))
           (read-ings (funcall ing-read-func)))
       (org-shoplist-recipe-create
-       (string-trim (replace-regexp-in-string org-todo-regexp "" (match-string 2)))
+       (string-trim
+	(replace-regexp-in-string org-tag-group-re ""
+				  (replace-regexp-in-string
+				   (or (org-shoplist--search-type-keyword-value) org-todo-regexp)
+				   "" (match-string 2))))
        (if (or factor (not org-shoplist-inital-factor)) factor org-shoplist-inital-factor)
        ing-read-func
        (if aggregate (reverse (org-shoplist-ing-aggregate read-ings)) read-ings)))))
@@ -566,6 +593,17 @@ When ‘REPLACEMENT-RECIPE’ is nil, won’t replace the recipe."
   "Get recipes of ‘SHOPLIST’."
   (caddr shoplist))
 
+(defun org-shoplist--read-search-regex ()
+  "Helper function to create a search regex with ‘org-shoplist-search-type’."
+  (let ((strat (car org-shoplist-search-type))
+	(tag-or-keyword-value (cadr org-shoplist-search-type))
+	(tag-value (caddr org-shoplist-search-type)))
+    (if (null org-not-done-keywords)
+	(user-error "‘org-todo-keywords’ consist of no not-done-keywords. This is incompatible with ‘org-shoplist-search-type’ (%s)" strat)
+      (cond ((eq strat 'tag) (concat ".+" (regexp-opt org-not-done-keywords) ".+" ":" tag-or-keyword-value ":"))
+	    ((eq strat 'keyword) (concat ".+" tag-or-keyword-value))
+	    ((eq strat 'keyword+tag) (concat ".+" tag-or-keyword-value ".+:" tag-value ":"))))))
+
 (defun org-shoplist-shoplist-read (content-provider ing-read-func &optional aggregate)
   "Parse current buffer and return a shoplist.
 When something is wrong will throw an error.
@@ -593,12 +631,14 @@ when non-nil."
 		 (goto-char (point-min))
 		 (while (and (not (= (point-max) (point)))
 			     (search-forward-regexp org-heading-regexp nil t 1))
-		   (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
+		   (when (save-excursion (beginning-of-line 1)
+					 (looking-at-p (org-shoplist--read-search-regex)))
 		     (beginning-of-line 1)
 		     (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))))
 	     (while (and (not (= (point-max) (point)))
 			 (search-forward-regexp org-heading-regexp nil t 1))
-	       (when (save-excursion (beginning-of-line 1) (looking-at-p (concat ".+" org-shoplist-keyword)))
+	       (when (save-excursion (beginning-of-line 1)
+				     (looking-at-p (org-shoplist--read-search-regex)))
 		 (beginning-of-line 1)
 		 (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))
 	     recipe-list))))
@@ -637,17 +677,19 @@ un-expanded file names."
 (defun org-shoplist-shoplist-as-todo-list (shoplist)
   "Format ‘SHOPLIST’ as todo-list."
   (concat
-   (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
-   (mapconcat (lambda (i) (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-ing-content-string i)))
+   (when (eq (car org-shoplist-search-type) 'keyword)
+     (concat "#+SEQ_TODO:\s" (org-shoplist--search-type-keyword-value) "\s|\sBOUGHT\n"))
+   (mapconcat (lambda (i) (concat "*\s" (or (org-shoplist--search-type-keyword-value) (car org-not-done-keywords)) "\s" (org-shoplist-ing-content-string i)))
               (org-shoplist-shoplist-ings shoplist)
               "\n")))
 
 (defun org-shoplist-shoplist-as-recipe-list (shoplist)
   "Format ‘SHOPLIST’ as recipe-list."
   (concat
-   (concat "#+SEQ_TODO:\s" org-shoplist-keyword "\s|\sBOUGHT\n")
+   (when (eq (car org-shoplist-search-type) 'keyword)
+     (concat "#+SEQ_TODO:\s" (org-shoplist--search-type-keyword-value) "\s|\sBOUGHT\n"))
    (mapconcat (lambda (r)
-                (concat "*\s" org-shoplist-keyword "\s" (org-shoplist-recipe-name r) "\s[0/0]\n"
+                (concat "*\s" (or (org-shoplist--search-type-keyword-value) (car org-not-done-keywords)) "\s" (org-shoplist-recipe-name r) "\s[0/0]\n"
                         (mapconcat (lambda (i) (concat "-\s[ ]\s" (org-shoplist-ing-content-string i)))
                                    (org-shoplist-recipe-get-all-ing r)
                                    "\n")))
@@ -687,23 +729,6 @@ formatter; otherwise, just use ‘ORG-SHOPLIST-DEFAULT-FORMAT’."
     (with-current-buffer (switch-to-buffer org-shoplist-buffer-name)
       (when (>= (buffer-size) 0) (erase-buffer))
       (org-shoplist-shoplist-insert (funcall formatter sl)))))
-
-(defun org-shoplist-init ()
-  "Setting the todo-keywords for current file."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (unless (looking-at-p "#\\+SEQ_TODO:") (insert "#\\+SEQ_TODO: " org-shoplist-keyword))
-    (funcall #'org-mode)))
-
-(defun org-shoplist-unmark-all ()
-  "Unmark all recipes which are marked with ‘ORG-SHOPLIST-KEYWORD’."
-  (interactive)
-  (save-excursion
-    (goto-char (point-min))
-    (beginning-of-line 2)
-    (while (re-search-forward (concat " " org-shoplist-keyword) nil t)
-      (replace-match "" nil nil))))
 
 (defun org-shoplist-recipe-set-factor (factor)
   "Set ‘FACTOR’ with property-name ‘ORG-SHOPLIST-FACTOR-PROPERTY-NAME’ on current recipe."
@@ -759,7 +784,12 @@ When ‘ORG-SHOPLIST-INITAL-FACTOR’ nil and a recipe has no factor will throw 
 (defun org-shoplist-overview ()
   "An overview of the current recipes you added."
   (interactive)
-  (org-search-view t org-shoplist-keyword))
+  (let ((strat (car org-shoplist-search-type))
+	(tag-or-keyword-value (cadr org-shoplist-search-type))
+	(tag-value (caddr org-shoplist-search-type)))
+    (cond ((eq strat 'keyword) (org-search-view t tag-or-keyword-value))
+	  ((eq strat 'tag) (org-tags-view '(4) tag-or-keyword-value))
+	  ((eq strat 'keyword+tag) (org-tags-view t (concat tag-value "/" tag-or-keyword-value))))))
 
 (provide 'org-shoplist)
 ;;; org-shoplist.el ends here

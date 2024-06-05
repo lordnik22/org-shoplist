@@ -15,7 +15,7 @@ in your init-file:
 ### Your first Shoplist ###
 - Create a new file or use one of your `org-agenda-files`
 - Add a recipe (See [Recipes](#Recipes) for some examples)
-- Mark your recipe (org-headers) for buying with `org-shoplist-keyword`
+- Mark your recipe (org-headers) for buying with "TOBUY" (defined in `org-shoplist-search-type`)
 - Press `M-x org-shoplist ENT`
 
 ## Contribution ##
@@ -140,6 +140,17 @@ present.
 With `C-u M-x org-shoplist ENT` you can pass an other
 formatter-function, also see [Format](#Format).
 ### Customization ###
+#### Search type ####
+
+`org-shoplist-search-type` defines how recipes are detected.
+
+There exist three strategies:
+- keyword: Detect org-headers for buying which are marked with specified keyword.
+- tag: Detect org-headers for buying which have the specified tag plus
+  are marked with one not-done-keyword.
+- keyword+tag: Detect org-headers for buying which are marked with
+  specified keyword plus have the specified tag.
+
 #### Explicitness ####
 There are two behaviors depending on `org-shoplist-explicit-keyword`
 (by defualt it's nil).

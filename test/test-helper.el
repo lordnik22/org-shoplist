@@ -11,7 +11,8 @@
   (setq org-shoplist-inital-factor 1
 	org-shoplist-ing-start-char "("
 	org-shoplist-ing-end-char ")"
-	org-todo-keywords (append org-todo-keywords (list (list 'sequence org-shoplist-keyword "BOUGHT")))))
+	org-todo-keywords (append org-todo-keywords (list (list 'sequence org-shoplist-keyword "BOUGHT")))
+	org-shoplist-search-type (list 'keyword "TOBUY")))
 
 (defconst org-shoplist-test-default-buffer "*Org-Shoplist-Test*")
 (defconst org-shoplist-test-default-result-buffer "*Org-Shoplist-Test-Result*")
@@ -23,7 +24,7 @@
 
 (org-shoplist-test-load-default-env)
 (defvar org-shoplist-test-backup-vars
-  (list (cons org-shoplist-keyword 'org-shoplist-keyword)
+  (list (cons org-shoplist-search-type 'org-shoplist-search-type)
         (cons org-shoplist-ing-regex 'org-shoplist-ing-regex)
         (cons org-shoplist-additional-units 'org-shoplist-additional-units)
         (cons org-shoplist-ing-start-char 'org-shoplist-ing-start-char)
