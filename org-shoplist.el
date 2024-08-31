@@ -626,7 +626,9 @@ when non-nil."
 	       (with-current-buffer
 		   (cond ((bufferp file-or-buffer-name) file-or-buffer-name)
 			 ((and (stringp file-or-buffer-name) (file-exists-p file-or-buffer-name))
-			  (org-find-base-buffer-visiting file-or-buffer-name))
+			  (if-let ((buf (org-find-base-buffer-visiting file-or-buffer-name)))
+			      buf
+			    (user-error "File %s not open in buffer" file-or-buffer-name)))
 			 (t (error "No such file or buffer %s" file-or-buffer-name)))
 		 (goto-char (point-min))
 		 (while (and (not (= (point-max) (point)))
@@ -635,12 +637,6 @@ when non-nil."
 					 (looking-at-p (org-shoplist--read-search-regex)))
 		     (beginning-of-line 1)
 		     (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))))
-	     (while (and (not (= (point-max) (point)))
-			 (search-forward-regexp org-heading-regexp nil t 1))
-	       (when (save-excursion (beginning-of-line 1)
-				     (looking-at-p (org-shoplist--read-search-regex)))
-		 (beginning-of-line 1)
-		 (setq recipe-list (append recipe-list (list (org-shoplist-recipe-read ing-read-func aggregate))))))
 	     recipe-list))))
     (apply #'org-shoplist-shoplist-create (reverse recipe-list))))
 
