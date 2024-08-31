@@ -35,15 +35,15 @@ For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
 `org-shoplist-ing-end-char`. Simple examples for ingredients:
-`(200g nuts), (1 nut), (1 big nut)`
+`(#200g nuts#), (#1 nut#), (#1 big nut#)`
 
 Structure:
-1. `org-shoplist-ing-start-char` (default: '(')
+1. `org-shoplist-ing-start-char` (default: '(#')
 2. Number (amount)
 2. optional unit
 3. space as separator
 4. followed by any name which can have ANY character expect `org-shoplist-ing-start-char` or `org-shoplist-ing-end-char`.
-5. `org-shoplist-ing-end-char` (default: ')')
+5. `org-shoplist-ing-end-char` (default: '#)')
 ### Unit ###
 For calculating with units the calc-package is used. You can use any
 unit by default that is listed in the calc-unit-table (`M-x
@@ -87,24 +87,24 @@ A recipe is a group of ingredients. You pretty much can write what
 ever you want. Important is that you format your ingredients
 properly (See [Ingredients](#Ingredients)).
 
-If you really need your parentheses, (See [Enclosing](#Enclosing)).
+You can change the enclosing of the ingredients, (See [Enclosing](#Enclosing)).
 
-A "marked recipe" is a org-header with the `org-shoplist-keyword`.
-Example: `* TOBUY Älpämagerone`
+A "marked recipe" is a org-header which will be detected by `org-shoplist`. How they are detected is defined by `org-shoplist-search-type`(default: (keyword "TOBUY")).
+Example using the default: `* TOBUY Älpämagerone`
 
 ### Example ###
 - As a list:
 ```
 * TOBUY Älpämagerone
-- (250ml Rahm)
-- (1 Zwiebel)
-- (250g Magrone)
-- (250g Emmentalerkäse)
+- (#250ml Rahm#)
+- (#1 Zwiebel#)
+- (#250g Magrone#)
+- (#250g Emmentalerkäse#)
 ```
 - As a german description:
 ```
 * TOBUY Älpämagerone 2
-Nimm (250ml Rahm) und (1 Zwiebel) vermische es mit (250g Magrone) und (250g Emmentalerkäse).
+Nimm (#250ml Rahm#) und (#1 Zwiebel#) vermische es mit (#250g Magrone#) und (#250g Emmentalerkäse#).
 Danach 15min köcheln lassen.
 ```
 You can also have nested headers (See [Explicitness](#Explicitness)).
@@ -124,10 +124,10 @@ Example:
   :PROPERTIES:
   :FACTOR:   2
   :END:
-- (500ml Rahm)
-- (2 Zwiebel)
-- (500g Magrone)
-- (500g Emmentalerkäse)
+- (#500ml Rahm#)
+- (#2 Zwiebel#)
+- (#500g Magrone#)
+- (#500g Emmentalerkäse#)
 ```
 
 ### Customization ###
@@ -166,12 +166,12 @@ There are two behaviors depending on `org-shoplist-explicit-keyword`
 When nil, all ingredients of nested headers are included.
 ```
 * TOBUY Älpämagerone
-- (250g Magrone)
+- (#250g Magrone#)
 ** Part 1
-- (1 Zwiebel)
+- (#1 Zwiebel#)
 ** Part 2
-- (250ml Rahm)
-- (250g Emmentalerkäse)
+- (#250ml Rahm#)
+- (#250g Emmentalerkäse#)
 ```
 
 When non-nil, only the headers with the `org-shoplist-keyword` are
@@ -180,11 +180,11 @@ flakes and chocolate but without vanilla.
 
 ```
 * TOBUY Cream
-- (250g flakes)
+- (#250g flakes#)
 ** TOBUY with chocolate
-- (100g chocolate)
+- (#100g chocolate#)
 ** with vanilla
-- (250ml vanilla)
+- (#250ml vanilla#)
 ```
 #### Aggregation ####
 You can turn off aggregation by setting `org-shoplist-aggregate` to

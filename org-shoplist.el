@@ -70,11 +70,11 @@ the shoplist."
 When nil won’t aggregate."
   :type 'boolean)
 
-(defcustom org-shoplist-ing-start-char "("
+(defcustom org-shoplist-ing-start-char "[("
   "Start char which introduces a ingredient."
   :type 'string)
 
-(defcustom org-shoplist-ing-end-char ")"
+(defcustom org-shoplist-ing-end-char ")]"
   "End char which terminats a ingredient."
   :type 'string)
 
