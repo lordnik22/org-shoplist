@@ -1,7 +1,7 @@
 # org-shoplist
 An extension to emacs for operating on org-files who provide
 food-recipes. It's meant to generate shopping lists and make
-eating-plans (We talk about delicious food — nothing technical).
+eating-plans (delicious food — nothing technical).
 ## Getting Started ##
 ### Installation ###
 Melpa: `M-x package-install ENT org-shoplist ENT`
@@ -10,7 +10,7 @@ Melpa: `M-x package-install ENT org-shoplist ENT`
 Use-package with straight: `M-x straight-use-package ENT org-shoplist ENT`
 ```emacs-lisp
 (use-package org-shoplist
-  :straight t
+  :straight t)
 ```
 
 Or directly from source
@@ -41,14 +41,20 @@ For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
 
 ## Introduction ##
 
-org-shoplist is a emacs package which extends org-mode with a parser
+`org-shoplist` is a emacs package which extends org-mode with a parser
 for food related structures. These include ingredients, recipes and
 shopping lists. It provides general functions to create, read,
 aggregate and calculate with these structures.
 
-In the following these structures are descriped in more detail,
-explaing what they are and which custom variable affect there
-behaivior.
+A normal user would only write correctly formatted food-recipes and
+use the functions `org-shoplist`, `org-shoplist-factor-up` and
+`org-shoplist-factor-down`.
+
+For tinkering users, the following chapters describe these structures
+in more detail, explaing what they are and which custom variable
+affect there behaivior.
+
+For programmers, read the code it's all there.
 
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
@@ -171,7 +177,7 @@ formatter-function, also see [Format](#Format).
 
 The custom variable `org-shoplist-search-type` defines how recipes are
 detected. Default is `'(keyword "TOBUY")` because of legacy.
-Personally I use `('tag "recipe")`.
+
 
 There exist three strategies:
 - `'keyword`: Detect org-headers for buying which are marked with specified keyword.
@@ -215,7 +221,7 @@ The format is established by a function which takes a shopping list as
 it's arguments. The defualt format is defined by
 `org-shoplist-default-format`. If you are interested in writing your
 own shoppinglist-formating-function, you may find it helpful reading
-the built-in formatter-functions in org-shoplist.el.
+the built-in formatter-functions in `org-shoplist.el`.
 
 Following formats are provided in this package:
 - `org-shoplist-shoplist-as-table`
