@@ -1,13 +1,20 @@
 # org-shoplist
 An extension to emacs for operating on org-files who provide
 food-recipes. It's meant to generate shopping lists and make
-eating-plans. (We talk about delicious food — nothing technical).
+eating-plans (We talk about delicious food — nothing technical).
 ## Getting Started ##
 ### Installation ###
 Melpa: `M-x package-install ENT org-shoplist ENT`
 
 
-Use-package with straight:
+Use-package with straight: `M-x straight-use-package ENT org-shoplist ENT`
+```emacs-lisp
+(use-package org-shoplist
+  :straight t
+```
+
+Or directly from source
+
 ```emacs-lisp
 (use-package org-shoplist
   :straight (org-shoplist :type git :host github :repo "lordnik22/org-shoplist"))
@@ -21,9 +28,9 @@ in your init-file:
 ```
 
 ### Your first Shoplist ###
-- Create a new file or use one of your `org-agenda-files`
-- Add a recipe (See [Recipes](#Recipes) for some examples)
-- Mark your recipe (org-headers) for buying with "TOBUY" (defined in `org-shoplist-search-type`)
+- Open one of your `org-agenda-files` (can be customized by `org-shoplist-files`)
+- Add a recipe (see [Recipes](#Recipes) for some examples)
+- Mark your recipe (org-headers) for buying with `TOBUY` (see [Recipe Detection](#Recipe Detection)).
 - Press `M-x org-shoplist ENT`
 
 ## Contribution ##
@@ -31,6 +38,17 @@ If you arise any problems or limitations which makes this package
 useless to you, please leave an issue with your concern.
 
 For any code-contributions read [CONTRIBUTING](CONTRIBUTING.md).
+
+## Introduction ##
+
+org-shoplist is a emacs package which extends org-mode with a parser
+for food related structures. These include ingredients, recipes and
+shopping lists. It provides general functions to create, read,
+aggregate and calculate with these structures.
+
+In the following these structures are descriped in more detail,
+explaing what they are and which custom variable affect there
+behaivior.
 
 ## Ingredients ##
 Enclose the ingredients with `org-shoplist-ing-start-char` and
@@ -85,11 +103,11 @@ aggregated together when `org-shoplist-aggregate` is non-nil (default).
 ## Recipes ##
 A recipe is a group of ingredients. You pretty much can write what
 ever you want. Important is that you format your ingredients
-properly (See [Ingredients](#Ingredients)).
+properly (see [Ingredients](#Ingredients)).
 
-You can change the enclosing of the ingredients, (See [Enclosing](#Enclosing)).
+You can change the enclosing of the ingredients, (see [Enclosing](#Enclosing)).
 
-A "marked recipe" is a org-header which will be detected by `org-shoplist`. How they are detected is defined by `org-shoplist-search-type`(default: (keyword "TOBUY")).
+A "marked recipe" is a org-header which will be detected by `org-shoplist`. How they are detected is defined by `org-shoplist-search-type`(default: (keyword "TOBUY"), see [Recipe Detection](#Recipe Detection)).
 Example using the default: `* TOBUY Älpämagerone`
 
 ### Example ###
@@ -107,7 +125,7 @@ Example using the default: `* TOBUY Älpämagerone`
 Nimm (#250ml Rahm#) und (#1 Zwiebel#) vermische es mit (#250g Magrone#) und (#250g Emmentalerkäse#).
 Danach 15min köcheln lassen.
 ```
-You can also have nested headers (See [Explicitness](#Explicitness)).
+You can also have nested headers (see [Explicitness](#Explicitness)).
 
 #### Factor ####
 A recipe can have a factor-property. With the factor-property you can
@@ -136,6 +154,7 @@ factor-property is set on the header.
 
 With `org-shoplist-factor-property-name` you can define the property-name to
 your taste.
+
 ## Shopping List ##
 A shopping list is a collection of ingredients, generated from the
 marked recipes. The marked recipes are read from `org-shoplist-files`
@@ -148,15 +167,17 @@ present.
 With `C-u M-x org-shoplist ENT` you can pass an other
 formatter-function, also see [Format](#Format).
 ### Customization ###
-#### Search type ####
+#### Recipe Detection ####
 
-`org-shoplist-search-type` defines how recipes are detected.
+The custom variable `org-shoplist-search-type` defines how recipes are
+detected. Default is `'(keyword "TOBUY")` because of legacy.
+Personally I use `('tag "recipe")`.
 
 There exist three strategies:
-- keyword: Detect org-headers for buying which are marked with specified keyword.
-- tag: Detect org-headers for buying which have the specified tag plus
+- `'keyword`: Detect org-headers for buying which are marked with specified keyword.
+- `'tag`: Detect org-headers for buying which have the specified tag plus
   are marked with one not-done-keyword.
-- keyword+tag: Detect org-headers for buying which are marked with
+- `'keyword+tag`: Detect org-headers for buying which are marked with
   specified keyword plus have the specified tag.
 
 #### Explicitness ####
@@ -197,12 +218,15 @@ own shoppinglist-formating-function, you may find it helpful reading
 the built-in formatter-functions in org-shoplist.el.
 
 Following formats are provided in this package:
-- org-shoplist-shoplist-as-table
-- org-shoplist-shoplist-as-todo-list
-- org-shoplist-shoplist-as-recipe-list
+- `org-shoplist-shoplist-as-table`
+- `org-shoplist-shoplist-as-todo-list`
+- `org-shoplist-shoplist-as-recipe-list`
 
-You can try them out by calling `org-shoplist` with `C-u`. Example with
-org-shoplist-shoplist-as-recipe-list:
-```C-u M-x org-shoplist ENT org-shoplist-shoplist-as-recipe-list ENT```
+You can try them out by calling `org-shoplist` with `C-u`.
+
+Example with `org-shoplist-shoplist-as-recipe-list`:
+```
+C-u M-x org-shoplist ENT org-shoplist-shoplist-as-recipe-list ENT
+```
 ## Other Customization ##
 Press `M-x customize-group org-shoplist ENT` for all custom variables.
